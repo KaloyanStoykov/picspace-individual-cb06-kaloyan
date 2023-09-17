@@ -1,0 +1,34 @@
+# IntelliJ IDEA files
+.idea/
+
+# Gradle files
+.gradle/
+build/
+
+# Compiled Java class files
+*.class
+
+# Log files
+*.log
+
+# IDE-specific files
+*.iml
+*.ipr
+*.iws
+
+# Eclipse files
+.classpath
+.project
+.settings/
+
+# Maven files
+target/
+
+# Operating System files
+.DS_Store
+Thumbs.db
+
+# Miscellaneous
+*.swp
+*.bak
+*.tmp
