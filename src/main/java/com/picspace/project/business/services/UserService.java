@@ -6,6 +6,7 @@ import com.picspace.project.persistence.UserRepository;
 import org.springframework.stereotype.Service;
 import java.util.List;
 
+
 @Service
 public class UserService {
 
@@ -23,8 +24,10 @@ public class UserService {
         return u;
     }
 
-    public void deleteUser(Integer userId){
+    public boolean deleteUser(Integer userId){
+
         this.userRepo.deleteById(userId);
+        return true;
     }
 
 

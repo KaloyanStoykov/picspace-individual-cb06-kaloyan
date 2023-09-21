@@ -6,6 +6,7 @@ import lombok.*;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+
 public class User {
 
     @ToString.Exclude
