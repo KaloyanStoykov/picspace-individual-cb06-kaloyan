@@ -6,7 +6,6 @@ import com.picspace.project.domain.User;
 import com.picspace.project.persistence.impl.FakeUserRepoImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.platform.commons.annotation.Testable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,6 +13,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+
 
 
 public class UserServiceTest {
@@ -52,9 +52,7 @@ public class UserServiceTest {
         newUser.setPassword("123");
         newUser.setAge(17);
 
-        assertThrows(UnderageUserException.class, () -> {
-            userService.saveUser(newUser);
-        });
+        assertThrows(UnderageUserException.class, () -> userService.saveUser(newUser));
     }
 
 
