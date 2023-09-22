@@ -26,7 +26,7 @@ public class UserService {
     }
 
     public boolean deleteUser(Integer userId){
-        int lastUserId = userRepo.getAllUsers().size() - 1;
+        int lastUserId = userRepo.getAllUsers().size();
 
         if(userId > lastUserId){
             throw new InvalidUserIdException();
