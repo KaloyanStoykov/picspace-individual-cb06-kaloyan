@@ -1,4 +1,4 @@
-package com.picspace.project.domain;
+package com.picspace.project.domain.restClasses;
 
 
 import lombok.Data;

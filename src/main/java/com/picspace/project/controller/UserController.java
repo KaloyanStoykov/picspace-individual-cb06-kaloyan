@@ -1,12 +1,13 @@
 package com.picspace.project.controller;
 
+import com.picspace.project.business.exception.InvalidUserIdException;
 import com.picspace.project.business.exception.UnderageUserException;
 import com.picspace.project.business.services.UserService;
-import com.picspace.project.domain.DeleteUserResponse;
+import com.picspace.project.domain.restClasses.DeleteUserResponse;
 import com.picspace.project.domain.User;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
-import com.picspace.project.domain.CreateUserResponse;
+import com.picspace.project.domain.restClasses.CreateUserResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -44,8 +45,8 @@ public class UserController {
             userService.deleteUser(id);
             return ResponseEntity.ok(new DeleteUserResponse(true, String.format("User with %d deleted successfully", id)));
         }
-        catch(Exception e){
-            return ResponseEntity.badRequest().body(new DeleteUserResponse(false, String.format("User with %d deleted successfully", id)));
+        catch(InvalidUserIdException e){
+            return ResponseEntity.badRequest().body(new DeleteUserResponse(false, String.format("User with %d id does not exist.", id)));
         }
 
 

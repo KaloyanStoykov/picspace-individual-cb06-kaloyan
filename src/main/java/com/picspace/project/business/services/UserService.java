@@ -1,5 +1,6 @@
 package com.picspace.project.business.services;
 
+import com.picspace.project.business.exception.InvalidUserIdException;
 import com.picspace.project.business.exception.UnderageUserException;
 import com.picspace.project.domain.User;
 import com.picspace.project.persistence.UserRepository;
@@ -25,6 +26,11 @@ public class UserService {
     }
 
     public boolean deleteUser(Integer userId){
+        int lastUserId = userRepo.getAllUsers().size() - 1;
+
+        if(userId > lastUserId){
+            throw new InvalidUserIdException();
+        }
 
         this.userRepo.deleteById(userId);
         return true;

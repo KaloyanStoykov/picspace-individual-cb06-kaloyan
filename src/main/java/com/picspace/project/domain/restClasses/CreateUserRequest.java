@@ -1,4 +1,4 @@
-package com.picspace.project.domain;
+package com.picspace.project.domain.restClasses;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
