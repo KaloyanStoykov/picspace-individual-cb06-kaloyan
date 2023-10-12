@@ -1,6 +1,7 @@
-package com.picspace.project.domain.restClasses;
+package com.picspace.project.domain.restRequestResponse.entryREST;
 
-import com.picspace.project.domain.User;
+
+import com.picspace.project.domain.Entry;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,6 +13,6 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class GetAllUsersResponse {
-    private List<User> users;
+public class GetEntriesByUserIdResponse {
+    private List<Entry> allUserEntries;
 }

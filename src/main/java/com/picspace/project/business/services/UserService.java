@@ -18,25 +18,26 @@ public class UserService {
     }
 
     public User saveUser(User u){
-        if(u.getAge() < 18){
-            throw new UnderageUserException();
-        }
+
         this.userRepo.saveUser(u);
         return u;
     }
 
     public boolean deleteUser(Integer userId){
-        int lastUserId = userRepo.getAllUsers().size();
 
-        if(userId > lastUserId){
-            throw new InvalidUserIdException();
-        }
+
 
         this.userRepo.deleteById(userId);
         return true;
     }
 
-
+    public User getByUserId(Integer id) {
+        return this.userRepo.getAllUsers()
+                .stream()
+                .filter(user -> user.getId().equals(id))
+                .findFirst()
+                .orElse(null);
+    }
 
     public List<User> getAllUsers(){
         return this.userRepo.getAllUsers();

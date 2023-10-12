@@ -42,20 +42,7 @@ public class UserServiceTest {
     }
 
 
-    @Test
-    void saveUser_ShouldThrowUnderageException(){
-
-
-        User newUser = new User();
-        newUser.setName("John");
-        newUser.setLastName("Winn");
-        newUser.setPassword("123");
-        newUser.setAge(17);
-
-        assertThrows(UnderageUserException.class, () -> {
-            userService.saveUser(newUser);
-        });
-    }
+    
 
 
     @Test
