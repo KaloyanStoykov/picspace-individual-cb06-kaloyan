@@ -2,13 +2,13 @@ package com.picspace.project.business.services;
 
 
 import com.picspace.project.business.exception.UserNotFoundException;
-import com.picspace.project.domain.User;
+
 import com.picspace.project.domain.restRequestResponse.userREST.GetUserByIdResponse;
 import com.picspace.project.persistence.UserRepository;
 import com.picspace.project.persistence.entity.UserEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+
 import java.util.Optional;
 
 
@@ -34,7 +34,5 @@ public class UserService {
         throw new UserNotFoundException();
     }
 
-    public List<User> getAllUsers(){
-        return null;
-    }
+
 }

@@ -19,7 +19,6 @@ import java.util.Date;
 @Builder
 public class EntryEntity {
     @Id
-
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name="id")
     private Long id;

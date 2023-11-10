@@ -1,9 +1,12 @@
 package com.picspace.project.serviceTest;
 
 
+import com.picspace.project.business.dbConverter.EntryConverter;
 import com.picspace.project.business.exception.InvalidParametersSuppliedException;
 import com.picspace.project.business.services.EntryService;
+import com.picspace.project.domain.Entry;
 import com.picspace.project.domain.restRequestResponse.entryREST.CreateEntryRequest;
+import com.picspace.project.domain.restRequestResponse.entryREST.GetEntriesByUserIdResponse;
 import com.picspace.project.persistence.EntryRepository;
 import com.picspace.project.persistence.UserRepository;
 import com.picspace.project.persistence.entity.EntryEntity;
@@ -14,7 +17,8 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 
-import java.util.Optional;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -25,10 +29,61 @@ public class EntryServiceTest {
 
 
 
+    @Test
+    void getEntriesByUserId_shouldReturnUserEntries(){
+        Long userId = 1L;
+        UserEntity neededUser = UserEntity.builder().id(userId).name("Kal").lastName("Stoykov").username("kiko").age(20).registeredAt(LocalDateTime.now()).userEntries(null).build();
+        UserEntity differentUser = UserEntity.builder().id(2L).name("Kal").lastName("Jackson").username("kikojack").age(21).registeredAt(LocalDateTime.now()).userEntries(null).build();
+
+        EntryRepository mockEntryRepo= mock(EntryRepository.class);
+        EntryConverter entryConverter = mock(EntryConverter.class);
 
 
 
+        List<EntryEntity> savedEntries = Arrays.asList(
+            EntryEntity.builder().id(1L).entryUser(neededUser).dateCreated(new Date()).content("testContent1").build(),
+            EntryEntity.builder().id(2L).entryUser(neededUser).dateCreated(new Date()).content("testContent2").build(),
+            EntryEntity.builder().id(3L).entryUser(differentUser).dateCreated(new Date()).content("testContent3").build(),
+            EntryEntity.builder().id(4L).entryUser(differentUser).dateCreated(new Date()).content("testContent4").build(),
+            EntryEntity.builder().id(5L).entryUser(differentUser).dateCreated(new Date()).content("testContent5").build(),
+            EntryEntity.builder().id(6L).entryUser(differentUser).dateCreated(new Date()).content("testContent6").build()
+        );
 
+
+
+        List<EntryEntity> userEntriesEntities = Arrays.asList(
+                EntryEntity.builder().id(1L).entryUser(neededUser).dateCreated(new Date()).content("testContent1").build(),
+                EntryEntity.builder().id(2L).entryUser(neededUser).dateCreated(new Date()).content("testContent2").build()
+
+        );
+
+        when(mockEntryRepo.findAll()).thenReturn(savedEntries);
+
+        when(mockEntryRepo.findByUserId(userId)).thenReturn(userEntriesEntities);
+
+
+        List<Entry> userEntries = new ArrayList<>();
+        for(EntryEntity entryEntity: userEntriesEntities ){
+            userEntries.add(entryConverter.toPojo(entryEntity));
+        }
+
+        GetEntriesByUserIdResponse expectedResponse = GetEntriesByUserIdResponse.builder().allUserEntries(userEntries).build();
+
+
+        EntryService entryService = new EntryService(mockEntryRepo, entryConverter, null);
+
+        GetEntriesByUserIdResponse actualResponse = entryService.getByUserId(userId);
+
+        verify(mockEntryRepo, times(1)).findByUserId(userId);
+
+        assertEquals(expectedResponse.getAllUserEntries(), actualResponse.getAllUserEntries());
+        assertEquals(expectedResponse.getAllUserEntries().size(), actualResponse.getAllUserEntries().size());
+
+        // Expecting two entries since expected response returns 2 entries in the test
+        for(int i = 0; i < 2; i++){
+            assertEquals(expectedResponse.getAllUserEntries().get(i), actualResponse.getAllUserEntries().get(i));
+        }
+    }
 
     @Test
     void createEntry_shouldCreateEntry(){
