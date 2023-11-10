@@ -1,19 +1,18 @@
-package com.picspace.project.domain;
+package com.picspace.project.domain.restRequestResponse.userREST;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import lombok.*;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.ToString;
 
 import java.time.LocalDateTime;
 
 @Data
-@Builder
 @AllArgsConstructor
-@NoArgsConstructor
-
-public class User {
-
-
-
+@Builder
+public class GetUserByIdResponse {
+    private Long id;
     private String name;
     private String lastName;
 
@@ -23,6 +22,5 @@ public class User {
 
     private Integer age;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime registeredAt;
 }

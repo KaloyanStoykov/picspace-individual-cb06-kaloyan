@@ -11,6 +11,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CreateEntryResponse {
-    private Integer postId;
+    private Long postId;
     private String message;
 }

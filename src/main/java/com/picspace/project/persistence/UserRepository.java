@@ -1,16 +1,10 @@
 package com.picspace.project.persistence;
 
-import com.picspace.project.domain.User;
+import com.picspace.project.persistence.entity.UserEntity;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 
-import java.util.List;
-
-public interface UserRepository {
-    User saveUser(User user);
-
-    void deleteById(Integer userId);
-
-    List<User> getAllUsers();
+public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
 
 

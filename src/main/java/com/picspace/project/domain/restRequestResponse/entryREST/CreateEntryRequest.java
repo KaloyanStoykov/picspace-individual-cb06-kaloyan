@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CreateEntryRequest {
-    private Integer userId;
+    private Long userId;
     private String content;
 
 }

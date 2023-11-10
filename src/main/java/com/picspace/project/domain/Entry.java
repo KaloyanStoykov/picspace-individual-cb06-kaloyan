@@ -1,19 +1,20 @@
 package com.picspace.project.domain;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.*;
 
-import java.time.LocalDateTime;
+import java.util.Date;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class Entry {
     @ToString.Exclude
-    private Integer postId;
-    private Integer userId;
+    private Long postId;
+    private User user;
     private String content;
-    private LocalDateTime dateCreated;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss", timezone = "UTC")
+    private Date dateCreated;
 }

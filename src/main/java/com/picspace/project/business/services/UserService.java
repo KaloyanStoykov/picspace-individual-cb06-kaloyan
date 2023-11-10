@@ -1,11 +1,15 @@
 package com.picspace.project.business.services;
 
-import com.picspace.project.business.exception.InvalidUserIdException;
-import com.picspace.project.business.exception.UnderageUserException;
+
+import com.picspace.project.business.exception.UserNotFoundException;
 import com.picspace.project.domain.User;
+import com.picspace.project.domain.restRequestResponse.userREST.GetUserByIdResponse;
 import com.picspace.project.persistence.UserRepository;
+import com.picspace.project.persistence.entity.UserEntity;
 import org.springframework.stereotype.Service;
+
 import java.util.List;
+import java.util.Optional;
 
 
 @Service
@@ -17,29 +21,20 @@ public class UserService {
         this.userRepo = userRepo;
     }
 
-    public User saveUser(User u){
-
-        this.userRepo.saveUser(u);
-        return u;
-    }
-
-    public boolean deleteUser(Integer userId){
+    public GetUserByIdResponse getByUserId(Long id) {
+        Optional<UserEntity> foundUser = userRepo.findById(id);
 
 
 
-        this.userRepo.deleteById(userId);
-        return true;
-    }
+        if(foundUser.isPresent()){
+            UserEntity userEntity = foundUser.get();
+            return GetUserByIdResponse.builder().id(userEntity.getId()).name(userEntity.getName()).lastName(userEntity.getLastName()).age(userEntity.getAge()).username(userEntity.getUsername()).password(userEntity.getPassword()).registeredAt(userEntity.getRegisteredAt()).build();
+        }
 
-    public User getByUserId(Integer id) {
-        return this.userRepo.getAllUsers()
-                .stream()
-                .filter(user -> user.getId().equals(id))
-                .findFirst()
-                .orElse(null);
+        throw new UserNotFoundException();
     }
 
     public List<User> getAllUsers(){
-        return this.userRepo.getAllUsers();
+        return null;
     }
 }
