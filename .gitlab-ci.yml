@@ -8,6 +8,17 @@ stages:
     - test
     - sonarqube-check
 
+build:
+    stage: build
+    script:
+        - ./gradlew assemble
+
+
+test:
+    stage: test
+    script:
+        - ./gradlew test
+
 
 sonarqube-check:
     stage: sonarqube-check
@@ -27,13 +38,6 @@ sonarqube-check:
         - main
         - develop
     
-build: 
-    stage: build 
-    script: 
-        - ./gradlew assemble 
+
     
     
-test: 
-    stage: test
-    script:
-        - ./gradlew test
