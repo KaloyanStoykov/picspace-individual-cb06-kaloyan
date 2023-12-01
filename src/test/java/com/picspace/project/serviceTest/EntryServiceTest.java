@@ -3,6 +3,7 @@ package com.picspace.project.serviceTest;
 
 import com.picspace.project.business.dbConverter.EntryConverter;
 import com.picspace.project.business.exception.InvalidParametersSuppliedException;
+import com.picspace.project.business.exception.UserNotFoundException;
 import com.picspace.project.business.services.EntryService;
 import com.picspace.project.domain.Entry;
 import com.picspace.project.domain.restRequestResponse.entryREST.CreateEntryRequest;
@@ -11,78 +12,85 @@ import com.picspace.project.persistence.EntryRepository;
 import com.picspace.project.persistence.UserRepository;
 import com.picspace.project.persistence.entity.EntryEntity;
 import com.picspace.project.persistence.entity.UserEntity;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 public class EntryServiceTest {
 
+    @Mock
+    private EntryRepository mockEntryRepo;
+
+    @Mock
+    private UserRepository mockUserRepo;
+
+    @Mock
+    private EntryConverter mockEntryConverter;
+
+    private EntryService entryService;
+
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+        entryService = new EntryService(mockEntryRepo, mockEntryConverter, mockUserRepo);
+    }
 
 
     @Test
-    void getEntriesByUserId_shouldReturnUserEntries(){
+    void getByUserId_UserFound_ShouldReturnEntries() {
         Long userId = 1L;
-        UserEntity neededUser = UserEntity.builder().id(userId).name("Kal").lastName("Stoykov").username("kiko").age(20).registeredAt(LocalDateTime.now()).userEntries(null).build();
-        UserEntity differentUser = UserEntity.builder().id(2L).name("Kal").lastName("Jackson").username("kikojack").age(21).registeredAt(LocalDateTime.now()).userEntries(null).build();
+        UserEntity userEntity = new UserEntity(); // Assume this is correctly initialized
+        EntryEntity entryEntity1 = new EntryEntity(); // Assume this is correctly initialized
+        EntryEntity entryEntity2 = new EntryEntity(); // Assume this is correctly initialized
+        Entry entry1 = new Entry(); // Assume this is correctly initialized
+        Entry entry2 = new Entry(); // Assume this is correctly initialized
 
-        EntryRepository mockEntryRepo= mock(EntryRepository.class);
+        when(mockUserRepo.findById(userId)).thenReturn(Optional.of(userEntity));
+        when(mockEntryRepo.findByUserId(userId)).thenReturn(Arrays.asList(entryEntity1, entryEntity2));
+        when(mockEntryConverter.toPojo(entryEntity1)).thenReturn(entry1);
+        when(mockEntryConverter.toPojo(entryEntity2)).thenReturn(entry2);
+
+        GetEntriesByUserIdResponse response = entryService.getByUserId(userId);
+
+        assertNotNull(response);
+        assertEquals(2, response.getAllUserEntries().size());
+        assertTrue(response.getAllUserEntries().containsAll(Arrays.asList(entry1, entry2)));
+    }
+
+    @Test
+    void getEntriesByUserId_shouldThrowUserNotFoundException() {
+        Long nonExistentUserId = 99L; // An ID that does not exist in the repository
+
+        // Mock the userRepository to return empty for non-existing user
+        UserRepository mockUserRepo = mock(UserRepository.class);
+        when(mockUserRepo.findById(nonExistentUserId)).thenReturn(Optional.empty());
+
+        // Mock the EntryRepository and EntryConverter
+        EntryRepository mockEntryRepo = mock(EntryRepository.class);
         EntryConverter entryConverter = mock(EntryConverter.class);
 
+        // Create an instance of EntryService with mocked repositories
+        EntryService entryService = new EntryService(mockEntryRepo, entryConverter, mockUserRepo);
 
+        // Assert that UserNotFoundException is thrown
+        assertThrows(UserNotFoundException.class, () -> {
+            entryService.getByUserId(nonExistentUserId);
+        });
 
-        List<EntryEntity> savedEntries = Arrays.asList(
-            EntryEntity.builder().id(1L).entryUser(neededUser).dateCreated(new Date()).content("testContent1").build(),
-            EntryEntity.builder().id(2L).entryUser(neededUser).dateCreated(new Date()).content("testContent2").build(),
-            EntryEntity.builder().id(3L).entryUser(differentUser).dateCreated(new Date()).content("testContent3").build(),
-            EntryEntity.builder().id(4L).entryUser(differentUser).dateCreated(new Date()).content("testContent4").build(),
-            EntryEntity.builder().id(5L).entryUser(differentUser).dateCreated(new Date()).content("testContent5").build(),
-            EntryEntity.builder().id(6L).entryUser(differentUser).dateCreated(new Date()).content("testContent6").build()
-        );
-
-
-
-        List<EntryEntity> userEntriesEntities = Arrays.asList(
-                EntryEntity.builder().id(1L).entryUser(neededUser).dateCreated(new Date()).content("testContent1").build(),
-                EntryEntity.builder().id(2L).entryUser(neededUser).dateCreated(new Date()).content("testContent2").build()
-
-        );
-
-        when(mockEntryRepo.findAll()).thenReturn(savedEntries);
-
-        when(mockEntryRepo.findByUserId(userId)).thenReturn(userEntriesEntities);
-
-
-        List<Entry> userEntries = new ArrayList<>();
-        for(EntryEntity entryEntity: userEntriesEntities ){
-            userEntries.add(entryConverter.toPojo(entryEntity));
-        }
-
-        GetEntriesByUserIdResponse expectedResponse = GetEntriesByUserIdResponse.builder().allUserEntries(userEntries).build();
-
-
-        EntryService entryService = new EntryService(mockEntryRepo, entryConverter, null);
-
-        GetEntriesByUserIdResponse actualResponse = entryService.getByUserId(userId);
-
-        verify(mockEntryRepo, times(1)).findByUserId(userId);
-
-        assertEquals(expectedResponse.getAllUserEntries(), actualResponse.getAllUserEntries());
-        assertEquals(expectedResponse.getAllUserEntries().size(), actualResponse.getAllUserEntries().size());
-
-        // Expecting two entries since expected response returns 2 entries in the test
-        for(int i = 0; i < 2; i++){
-            assertEquals(expectedResponse.getAllUserEntries().get(i), actualResponse.getAllUserEntries().get(i));
-        }
+        // Verify that entryRepo.findByUserId is not called
+        verify(mockEntryRepo, never()).findByUserId(nonExistentUserId);
     }
 
     @Test
@@ -135,6 +143,22 @@ public class EntryServiceTest {
         verify(mockRepo, never()).save(any());
     }
 
+    @Test
+    void createEntry_ShouldThrowUserNotFoundExceptionWhenUserDoesNotExist() {
+        // Arrange
+        Long nonExistentUserId = 999L; // assuming this ID does not exist
+        CreateEntryRequest createEntryRequest = new CreateEntryRequest(nonExistentUserId, "Some content");
+        EntryRepository mockEntryRepo = mock(EntryRepository.class);
+        UserRepository mockUserRepo = mock(UserRepository.class);
+
+        // Simulate user not found
+        when(mockUserRepo.findById(nonExistentUserId)).thenReturn(Optional.empty());
+
+        EntryService entryService = new EntryService(mockEntryRepo, null, mockUserRepo);
+
+        // Act & Assert
+        assertThrows(UserNotFoundException.class, () -> entryService.createEntry(createEntryRequest));
+    }
 
 
 

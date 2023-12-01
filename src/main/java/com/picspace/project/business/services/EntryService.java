@@ -57,6 +57,9 @@ public class EntryService {
     }
 
     public GetEntriesByUserIdResponse getByUserId(Long userId) {
+        if(userRepository.findById(userId).isEmpty()){
+            throw new UserNotFoundException();
+        }
 
         List<Entry> allUserEntries = new ArrayList<>();
         for(EntryEntity entryEntity: this.entryRepo.findByUserId(userId)){

@@ -16,6 +16,16 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedMethods("GET", "POST")
                 .allowedHeaders("*");
 
+        registry.addMapping("/signin")
+                .allowedOrigins("http://localhost:5173")
+                .allowedMethods("POST")
+                .allowedHeaders("*");
+
+        registry.addMapping("/signup")
+                .allowedOrigins("http://localhost:5173")
+                .allowedMethods("POST")
+                .allowedHeaders("*");
+
 
 
     }
