@@ -7,6 +7,7 @@ import com.picspace.project.business.exception.UserNotFoundException;
 import com.picspace.project.domain.User;
 import com.picspace.project.domain.restRequestResponse.userREST.GetAllUsersResponse;
 import com.picspace.project.domain.restRequestResponse.userREST.GetUserByIdResponse;
+import com.picspace.project.domain.restRequestResponse.userREST.UpdateUserResponse;
 import com.picspace.project.persistence.UserRepository;
 import com.picspace.project.persistence.entity.UserEntity;
 import lombok.RequiredArgsConstructor;
@@ -70,6 +71,24 @@ public class UserService {
 
         return GetAllUsersResponse.builder().allUsers(users).build();
 
+    }
+
+    public UpdateUserResponse updateUser(Long userId, String name, String lastName, String username, int age) {
+        return userRepo.findById(userId)
+                .map(user -> {
+                    user.setName(name);
+                    user.setLastName(lastName);
+                    user.setUsername(username);
+                    user.setAge(age);
+                    UserEntity userEntity = userRepo.save(user);
+
+                    UpdateUserResponse response = new UpdateUserResponse("User updated successfully!", userEntity.getId());
+
+                    return response;
+
+
+                })
+                .orElseThrow(UserNotFoundException::new);
     }
 
 

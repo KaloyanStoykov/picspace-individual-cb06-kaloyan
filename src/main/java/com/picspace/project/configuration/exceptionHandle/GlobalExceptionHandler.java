@@ -5,7 +5,6 @@ import com.picspace.project.business.exception.UsernameAlreadyExistsException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
@@ -31,5 +30,7 @@ public class GlobalExceptionHandler {
                 .build();
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(exceptionErrorResponse);
     }
+
+
 
 }

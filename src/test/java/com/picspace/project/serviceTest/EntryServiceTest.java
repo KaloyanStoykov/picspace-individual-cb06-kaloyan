@@ -21,7 +21,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -69,6 +68,7 @@ public class EntryServiceTest {
         assertTrue(response.getAllUserEntries().containsAll(Arrays.asList(entry1, entry2)));
     }
 
+
     @Test
     void getEntriesByUserId_shouldThrowUserNotFoundException() {
         Long nonExistentUserId = 99L; // An ID that does not exist in the repository
@@ -106,6 +106,8 @@ public class EntryServiceTest {
         UserEntity mockUser = new UserEntity();
         mockUser.setId(userId);
         UserRepository userMockRepository = mock(UserRepository.class);
+
+
 
         when(userMockRepository.findById(userId)).thenReturn(Optional.of(mockUser));
 

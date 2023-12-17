@@ -2,11 +2,11 @@ package com.picspace.project.serviceTest;
 
 import com.picspace.project.business.dbConverter.UserConverter;
 import com.picspace.project.business.exception.UserNotFoundException;
-import com.picspace.project.business.exception.UsernameAlreadyExistsException;
 import com.picspace.project.business.services.UserService;
 import com.picspace.project.domain.User;
 import com.picspace.project.domain.restRequestResponse.userREST.GetAllUsersResponse;
 import com.picspace.project.domain.restRequestResponse.userREST.GetUserByIdResponse;
+import com.picspace.project.domain.restRequestResponse.userREST.UpdateUserResponse;
 import com.picspace.project.persistence.UserRepository;
 import com.picspace.project.persistence.entity.EntryEntity;
 import com.picspace.project.persistence.entity.RoleEntity;
@@ -23,8 +23,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
-
 import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -188,6 +186,51 @@ public class UserServiceTest {
 
         // Assert is handled by the expected exception
     }
+
+
+    @Test
+    public void testUpdateUser_Success() {
+        // Arrange
+        Long userId = 1L;
+        String newName = "NewName";
+        String newLastName = "NewLastName";
+        String newUsername = "NewUsername";
+        int newAge = 35;
+
+        UserEntity existingUser = new UserEntity();
+        existingUser.setId(userId);
+        existingUser.setName("OldName");
+        existingUser.setLastName("OldLastName");
+        existingUser.setUsername("OldUsername");
+        existingUser.setAge(30);
+
+        when(userRepo.findById(userId)).thenReturn(Optional.of(existingUser));
+        when(userRepo.save(any(UserEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // Act
+        UpdateUserResponse updatedUserResponse = userService.updateUser(userId, newName, newLastName, newUsername, newAge);
+
+        // Assert
+        assertNotNull(updatedUserResponse);
+        assertEquals("User updated successfully!", updatedUserResponse.getMessage());
+        assertEquals(userId, updatedUserResponse.getUserId());
+        verify(userRepo).findById(userId);
+        verify(userRepo).save(any(UserEntity.class));
+    }
+
+
+    @Test
+    public void testUpdateUser_UserNotFound() {
+        // Arrange
+        Long userId = 2L;
+
+        when(userRepo.findById(userId)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThrows(UserNotFoundException.class, () ->
+                userService.updateUser(userId, "Name", "LastName", "Username", 25));
+    }
+
 
 
 }

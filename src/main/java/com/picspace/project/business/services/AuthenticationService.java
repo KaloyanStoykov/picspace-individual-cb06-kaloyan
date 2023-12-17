@@ -7,10 +7,8 @@ import com.picspace.project.domain.restRequestResponse.authREST.SignUpRequest;
 import com.picspace.project.domain.restRequestResponse.authREST.SignInRequest;
 import com.picspace.project.persistence.RoleRepository;
 import com.picspace.project.persistence.UserRepository;
-import com.picspace.project.persistence.entity.Role;
 import com.picspace.project.persistence.entity.RoleEntity;
 import com.picspace.project.persistence.entity.UserEntity;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -18,9 +16,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
