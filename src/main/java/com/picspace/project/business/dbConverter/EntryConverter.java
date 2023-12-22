@@ -9,8 +9,6 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class EntryConverter implements EntityConverter<EntryEntity, Entry> {
-
-
     private EntityConverter<UserEntity, User> userConverter;
 
 
