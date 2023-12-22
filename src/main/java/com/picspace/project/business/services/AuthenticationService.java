@@ -2,6 +2,7 @@ package com.picspace.project.business.services;
 
 
 import com.picspace.project.business.exception.UsernameAlreadyExistsException;
+import com.picspace.project.configuration.JwtService;
 import com.picspace.project.domain.restRequestResponse.authREST.JwtAuthenticationResponse;
 import com.picspace.project.domain.restRequestResponse.authREST.SignUpRequest;
 import com.picspace.project.domain.restRequestResponse.authREST.SignInRequest;

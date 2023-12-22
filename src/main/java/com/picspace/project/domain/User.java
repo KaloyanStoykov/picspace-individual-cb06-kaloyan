@@ -13,6 +13,8 @@ import java.time.LocalDateTime;
 public class User {
 
 
+    @ToString.Exclude
+    private Long id;
 
     private String name;
     private String lastName;

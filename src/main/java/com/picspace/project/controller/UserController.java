@@ -20,8 +20,8 @@ public class UserController {
 
     @GetMapping()
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<GetAllUsersResponse> getAllUsers(){
-        GetAllUsersResponse getAllUsersResponse = userService.getAllUsers();
+    public ResponseEntity<GetAllUsersResponse> getAllUsers(@RequestParam(defaultValue =  "0") int page, @RequestParam(defaultValue = "10") int size){
+        GetAllUsersResponse getAllUsersResponse = userService.getAllUsers(page, size);
         return ResponseEntity.ok().body(getAllUsersResponse);
     }
 

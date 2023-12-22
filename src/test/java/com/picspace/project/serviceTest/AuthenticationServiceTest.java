@@ -1,9 +1,8 @@
 package com.picspace.project.serviceTest;
 
-import com.picspace.project.business.exception.UserNotFoundException;
 import com.picspace.project.business.exception.UsernameAlreadyExistsException;
 import com.picspace.project.business.services.AuthenticationService;
-import com.picspace.project.business.services.JwtService;
+import com.picspace.project.configuration.JwtService;
 import com.picspace.project.business.services.UserService;
 import com.picspace.project.domain.restRequestResponse.authREST.JwtAuthenticationResponse;
 import com.picspace.project.domain.restRequestResponse.authREST.SignInRequest;

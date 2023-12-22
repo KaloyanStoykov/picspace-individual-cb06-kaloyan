@@ -1,5 +1,6 @@
 package com.picspace.project.configuration.exceptionHandle;
 
+import com.picspace.project.business.exception.NoFilteredUsersFoundException;
 import com.picspace.project.business.exception.UserNotFoundException;
 import com.picspace.project.business.exception.UsernameAlreadyExistsException;
 import org.springframework.http.HttpStatus;
@@ -29,6 +30,15 @@ public class GlobalExceptionHandler {
                 .message("Invalid username and/or password!")
                 .build();
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(exceptionErrorResponse);
+    }
+
+    @ExceptionHandler({NoFilteredUsersFoundException.class})
+    public ResponseEntity<Object> handleFilterUsersNotFound(NoFilteredUsersFoundException exception) {
+        ExceptionErrorResponse exceptionErrorResponse = ExceptionErrorResponse.builder()
+                .status(HttpStatus.NOT_FOUND.name())
+                .message(exception.getReason())
+                .build();
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exceptionErrorResponse);
     }
 
 

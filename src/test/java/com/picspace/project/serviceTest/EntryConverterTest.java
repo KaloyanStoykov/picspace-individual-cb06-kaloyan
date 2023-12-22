@@ -48,7 +48,7 @@ public class EntryConverterTest {
         // Arrange
         LocalDateTime registrationTime = LocalDateTime.now();
         UserEntity userEntity1 = new UserEntity(1L, "John", "Doe", "johndoe", "pass1", 30, registrationTime, roles, entries);
-        User user1 = new User("John", "Doe", "johndoe", "pass1", 30, registrationTime);
+        User user1 = new User(1L, "John", "Doe", "johndoe", "pass1", 30, registrationTime);
 
         Date date = new Date();
         Entry entry = new Entry(1L, user1, "content", date);
@@ -79,7 +79,7 @@ public class EntryConverterTest {
         // Arrange
         LocalDateTime registrationTime = LocalDateTime.now();
         UserEntity userEntity1 = new UserEntity(1L, "John", "Doe", "johndoe", "pass1", 30, registrationTime, roles, entries);
-        User user1 = new User("John", "Doe", "johndoe", "pass1", 30, registrationTime);
+        User user1 = new User(2L, "John", "Doe", "johndoe", "pass1", 30, registrationTime);
 
         Date date = new Date();
         EntryEntity entryEntity = new EntryEntity(1L, userEntity1, "content", date);

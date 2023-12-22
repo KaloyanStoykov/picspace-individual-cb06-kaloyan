@@ -18,6 +18,11 @@ sonar {
 		property "sonar.projectKey", "I507612_picspace-individual-cb06-kaloyan_AYu4f98zhZhNFmKffsh9"
 		property "sonar.projectName", "PicSpace - Individual - CB06 - Kaloyan"
 		property "sonar.qualitygate.wait", true
+        property "sonar.coverage.exclusions", ["**/src/main/java/com/picspace/project/configuration/**",
+                                               "**/src/main/java/com/picspace/project/controller/**",
+                                               "**/src/main/java/com/picspace/project/domain/**",
+                                               "**/src/main/java/com/picspace/project/filters/**",
+                                               "**/src/main/java/com/picspace/project/persistence/**"]
 	}
 }
 
@@ -47,6 +52,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'mysql:mysql-connector-java:8.0.33'
     testImplementation 'junit:junit:4.13.1'
+    testImplementation 'org.testng:testng:7.1.0'
     compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'

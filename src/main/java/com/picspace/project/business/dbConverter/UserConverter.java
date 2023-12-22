@@ -26,6 +26,7 @@ public class UserConverter implements EntityConverter<UserEntity, User>{
     @Override
     public User toPojo(UserEntity userEntity){
         return User.builder()
+                .id(userEntity.getId())
                 .name(userEntity.getName())
                 .lastName(userEntity.getLastName())
                 .username(userEntity.getUsername())

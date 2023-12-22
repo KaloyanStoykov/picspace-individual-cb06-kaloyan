@@ -1,10 +1,13 @@
 package com.picspace.project.serviceTest;
 
 import com.picspace.project.business.dbConverter.UserConverter;
+import com.picspace.project.business.exception.NoFilteredUsersFoundException;
 import com.picspace.project.business.exception.UserNotFoundException;
 import com.picspace.project.business.services.UserService;
+import com.picspace.project.domain.FilterDTO;
 import com.picspace.project.domain.User;
 import com.picspace.project.domain.restRequestResponse.userREST.GetAllUsersResponse;
+import com.picspace.project.domain.restRequestResponse.userREST.GetFilteredUsersResponse;
 import com.picspace.project.domain.restRequestResponse.userREST.GetUserByIdResponse;
 import com.picspace.project.domain.restRequestResponse.userREST.UpdateUserResponse;
 import com.picspace.project.persistence.UserRepository;
@@ -17,6 +20,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.data.domain.*;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -24,8 +29,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import java.time.LocalDateTime;
 import java.util.*;
 import static org.junit.Assert.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 public class UserServiceTest {
@@ -92,27 +96,41 @@ public class UserServiceTest {
     @Test
     public void testGetAllUsers() {
 
-        RoleEntity roleEntity = new RoleEntity(1L, "ROLE_USER");
-        List<RoleEntity> roles = new ArrayList<>();
-        roles.add(roleEntity);
+        int page = 0;
+        int size = 10;
+
+        // Non-admin role
+        RoleEntity userRoleEntity = new RoleEntity(1L, "ROLE_USER");
+        List<RoleEntity> userRoles = new ArrayList<>();
+        userRoles.add(userRoleEntity);
+
+        // Admin role
+        RoleEntity adminRoleEntity = new RoleEntity(2L, "ROLE_ADMIN");
+        List<RoleEntity> adminRoles = new ArrayList<>();
+        adminRoles.add(adminRoleEntity);
 
         List<EntryEntity> entries = Collections.emptyList();
 
-        // Arrange
-        UserEntity userEntity1 = new UserEntity(1L, "John", "Doe", "johndoe", "pass1", 30, LocalDateTime.now(), roles, entries);
-        UserEntity userEntity2 = new UserEntity(2L, "Jane", "Doe", "janedoe", "pass2", 25, LocalDateTime.now(), roles, entries);
-        List<UserEntity> mockUserEntities = Arrays.asList(userEntity1, userEntity2);
+        // Two non-admin users
+        UserEntity userEntity1 = new UserEntity(1L, "John", "Doe", "johndoe", "pass1", 30, LocalDateTime.now(), userRoles, entries);
+        UserEntity userEntity2 = new UserEntity(2L, "Jane", "Doe", "janedoe", "pass2", 25, LocalDateTime.now(), userRoles, entries);
 
-        User user1 = new User("John", "Doe", "johndoe", "pass1", 30, LocalDateTime.now());
-        User user2 = new User("Jane", "Doe", "janedoe", "pass2", 25, LocalDateTime.now());
+        // One admin user (should be filtered out)
+        UserEntity adminEntity = new UserEntity(3L, "Admin", "User", "adminuser", "adminpass", 35, LocalDateTime.now(), adminRoles, entries);
+
+        List<UserEntity> allUserEntities = Arrays.asList(userEntity1, userEntity2, adminEntity);
+        Page<UserEntity> userEntityPage = new PageImpl<>(Arrays.asList(userEntity1, userEntity2), PageRequest.of(page, size), 2);
+
+        User user1 = new User(1L, "John", "Doe", "johndoe", "pass1", 30, LocalDateTime.now());
+        User user2 = new User(2L, "Jane", "Doe", "janedoe", "pass2", 25, LocalDateTime.now());
         List<User> expectedUsers = Arrays.asList(user1, user2);
 
-        when(userRepo.findAll()).thenReturn(mockUserEntities);
+        when(userRepo.findAll(any(Specification.class), any(PageRequest.class))).thenReturn(userEntityPage);
         when(userConverter.toPojo(userEntity1)).thenReturn(user1);
         when(userConverter.toPojo(userEntity2)).thenReturn(user2);
 
         // Act
-        GetAllUsersResponse response = userService.getAllUsers();
+        GetAllUsersResponse response = userService.getAllUsers(page, size);
 
         // Assert
         assertNotNull(response);
@@ -120,10 +138,95 @@ public class UserServiceTest {
         assertEquals(expectedUsers, response.getAllUsers());
 
         // Verify interactions
-        verify(userRepo, times(1)).findAll();
+        verify(userRepo, times(1)).findAll(any(Specification.class), any(PageRequest.class));
         verify(userConverter, times(1)).toPojo(userEntity1);
         verify(userConverter, times(1)).toPojo(userEntity2);
     }
+
+
+    @Test
+    public void testGetFilteredUsers_Successful() {
+        // Arrange
+        int page = 1;
+        int size = 10;
+        String filterName = "John";
+
+        // Set up filter to search for users with the name "John"
+        List<FilterDTO> filterDTOList = Arrays.asList(new FilterDTO("name", filterName));
+
+        // Create mock UserEntities, only one matching the filter
+        UserEntity userEntity1 = new UserEntity(1L, "John", "Doe", "johndoe", "password123", 30, LocalDateTime.now(), null, null);
+        UserEntity userEntity2 = new UserEntity(2L, "Jane", "Doe", "janedoe", "password456", 25, LocalDateTime.now(), null, null);
+
+        // Only include the user that matches the filter
+        List<UserEntity> filteredUserEntities = Arrays.asList(userEntity1);
+
+        // Mock the Page object to return only the filtered user
+        Page<UserEntity> userPage = new PageImpl<>(filteredUserEntities, PageRequest.of(page - 1, size), filteredUserEntities.size());
+
+        // Mocking findAll with a Specification<UserEntity> and a Pageable
+        when(userRepo.findAll(any(Specification.class), any(PageRequest.class))).thenReturn(userPage);
+
+        // Create User DTO for the filtered user
+        User user1 = User.builder()
+                .name("John")
+                .lastName("Doe")
+                .username("johndoe")
+                .password("password123")
+                .age(30)
+                .registeredAt(LocalDateTime.now())
+                .build();
+
+        // Mock the conversion of the UserEntity to User DTO
+        when(userConverter.toPojo(userEntity1)).thenReturn(user1);
+
+        // Act
+        GetFilteredUsersResponse response = userService.getFilteredUsers(filterDTOList, page, size);
+
+        // Assert
+        assertNotNull(response);
+        assertFalse(response.getAllUsers().isEmpty());
+        assertEquals(1, response.getAllUsers().size()); // Only 1 user should be returned as per the filter
+        assertEquals(filteredUserEntities.size(), response.getTotalItems());
+        assertEquals(1, response.getTotalPages());
+
+        // Verify the interactions
+        verify(userRepo, times(1)).findAll(any(Specification.class), any(PageRequest.class));
+        verify(userConverter, times(1)).toPojo(userEntity1);
+        // Ensure no interaction with userEntity2 as it does not match the filter
+        verify(userConverter, never()).toPojo(userEntity2);
+    }
+
+
+    @Test
+    public void testGetFilteredUsers_NoMatchingUsers() {
+        // Arrange
+        int page = 1;
+        int size = 10;
+        String filterName = "John";
+
+        // Set up filter to search for users with the name "John"
+        List<FilterDTO> filterDTOList = Arrays.asList(new FilterDTO("name", filterName));
+
+        // Create an empty list to simulate no matching users
+        List<UserEntity> noMatchingUserEntities = new ArrayList<>();
+
+        // Mock the Page object to return an empty list
+        Page<UserEntity> emptyUserPage = new PageImpl<>(noMatchingUserEntities, PageRequest.of(page - 1, size), noMatchingUserEntities.size());
+
+        // Mocking findAll with a Specification<UserEntity> and a Pageable to return an empty page
+        when(userRepo.findAll(any(Specification.class), any(PageRequest.class))).thenReturn(emptyUserPage);
+
+        // Act
+
+
+
+        assertThrows(NoFilteredUsersFoundException.class, () -> {
+            userService.getFilteredUsers(filterDTOList, page, size);
+        });
+    }
+
+
 
     @Test
     public void testSaveExistingUser() {

@@ -2,15 +2,23 @@ package com.picspace.project.business.services;
 
 
 import com.picspace.project.business.dbConverter.UserConverter;
+import com.picspace.project.business.exception.NoFilteredUsersFoundException;
 import com.picspace.project.business.exception.UserNotFoundException;
 
+import com.picspace.project.domain.FilterDTO;
 import com.picspace.project.domain.User;
 import com.picspace.project.domain.restRequestResponse.userREST.GetAllUsersResponse;
+import com.picspace.project.domain.restRequestResponse.userREST.GetFilteredUsersResponse;
 import com.picspace.project.domain.restRequestResponse.userREST.GetUserByIdResponse;
 import com.picspace.project.domain.restRequestResponse.userREST.UpdateUserResponse;
 import com.picspace.project.persistence.UserRepository;
+import com.picspace.project.persistence.UserSpecification;
 import com.picspace.project.persistence.entity.UserEntity;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -18,9 +26,9 @@ import org.springframework.stereotype.Service;
 
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -46,6 +54,42 @@ public class UserService {
         return userRepo.save(newUser);
     }
 
+
+    public GetFilteredUsersResponse getFilteredUsers(List<FilterDTO> filterDTOList, int page, int size){
+        if (page < 1) {
+            page = 1;
+        }
+
+        if (size < 1) {
+            size = 10;
+        }
+
+        Pageable pageable = PageRequest.of(page - 1, size);
+        Specification<UserEntity> spec = UserSpecification.columnEqual(filterDTOList);
+
+        // Assuming there's a repository named userRepository
+        Page<UserEntity> userPage = userRepo.findAll(spec, pageable);
+
+        if (userPage.getContent().size() == 0) {
+            throw new NoFilteredUsersFoundException();
+        }
+
+        // Converting UserEntity list to User list
+        List<User> allUsers = userPage.getContent().stream()
+                .map(userConverter::toPojo) // Assuming convertToUser is a method that converts UserEntity to User
+                .collect(Collectors.toList());
+
+
+
+        return GetFilteredUsersResponse.builder()
+                .allUsers(allUsers)
+                .currentPage(userPage.getNumber() + 1) // Page number is zero-based in Pageable
+                .totalItems(userPage.getTotalElements())
+                .totalPages(userPage.getTotalPages())
+                .build();
+
+    }
+
     public GetUserByIdResponse getByUserId(Long id) {
         Optional<UserEntity> foundUser = userRepo.findById(id);
 
@@ -60,17 +104,23 @@ public class UserService {
     }
 
 
-    public GetAllUsersResponse getAllUsers(){
-        List<UserEntity> allUserEntities = userRepo.findAll();
-        List<User> users = new ArrayList<>();
+    public GetAllUsersResponse getAllUsers(int page, int size) {
 
-        for(UserEntity userEntity: allUserEntities){
-            User user = userConverter.toPojo(userEntity);
-            users.add(user);
-        }
+        // Combine it with the specification to exclude admins
+        Specification<UserEntity> spec = UserSpecification.excludeAdmins();
 
-        return GetAllUsersResponse.builder().allUsers(users).build();
+        // Fetch the page of users with the combined specifications
+        Page<UserEntity> pageUserEntities = userRepo.findAll(spec, PageRequest.of(page, size));
+        List<User> users = pageUserEntities.getContent().stream()
+                .map(userConverter::toPojo)
+                .collect(Collectors.toList());
 
+        return GetAllUsersResponse.builder()
+                .allUsers(users)
+                .currentPage(pageUserEntities.getNumber() + 1) // Assuming page numbers are 1-based in the response
+                .totalItems(pageUserEntities.getTotalElements())
+                .totalPages(pageUserEntities.getTotalPages())
+                .build();
     }
 
     public UpdateUserResponse updateUser(Long userId, String name, String lastName, String username, int age) {

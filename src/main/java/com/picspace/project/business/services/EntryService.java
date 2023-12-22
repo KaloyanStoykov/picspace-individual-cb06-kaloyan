@@ -34,11 +34,11 @@ public class EntryService {
         Optional<UserEntity> userEntity = userRepository.findById(request.getUserId());
 
 
-        // Happy flow check
+
         if( request.getContent() == null || request.getContent().isBlank()){
             throw new InvalidParametersSuppliedException("Content is invalid!");
         }
-        if(request.getUserId() == null ||request.getUserId() == 0L){
+        if(request.getUserId() == null ||  request.getUserId() == 0L){
             throw new InvalidParametersSuppliedException("Invalid userId was supplied");
         }
 
@@ -51,7 +51,7 @@ public class EntryService {
 
         }
 
-        // User not found
+
         throw new UserNotFoundException();
 
     }

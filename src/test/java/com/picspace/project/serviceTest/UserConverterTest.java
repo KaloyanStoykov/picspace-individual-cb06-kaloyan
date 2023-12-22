@@ -44,7 +44,7 @@ public class UserConverterTest {
         List<EntryEntity> entries = Collections.emptyList();
         // Arrange
         LocalDateTime registrationTime = LocalDateTime.now();
-        User user = new User("John", "Doe", "johndoe", "pass123", 30, registrationTime);
+        User user = new User(1L, "John", "Doe", "johndoe", "pass123", 30, registrationTime);
         UserEntity userEntity1 = UserEntity.builder().name("John").lastName("Doe").username("johndoe").password("pass123").age(30).registeredAt(registrationTime).build();
 
 
@@ -70,8 +70,8 @@ public class UserConverterTest {
 
         LocalDateTime registrationTime = LocalDateTime.now();
 
-        UserEntity userEntity = UserEntity.builder().name("Kal").lastName("Stoykov").username("kiko").age(19).registeredAt(registrationTime).build();
-        User user = new User("Kal", "Stoykov", "kiko", "pass123", 19, registrationTime);
+        UserEntity userEntity = UserEntity.builder().id(1L).name("Kal").lastName("Stoykov").username("kiko").age(19).registeredAt(registrationTime).build();
+        User user = new User(1L, "Kal", "Stoykov", "kiko", "pass123", 19, registrationTime);
 
 
         when(userConverter.toPojo(userEntity)).thenReturn(user);
@@ -80,6 +80,7 @@ public class UserConverterTest {
         User result = userConverter.toPojo(userEntity);
         // Assert
         assertNotNull(result);
+        assertEquals(userEntity.getId(), result.getId());
         assertEquals(userEntity.getName(), result.getName());
         assertEquals(userEntity.getLastName(), result.getLastName());
         assertEquals(userEntity.getUsername(), result.getUsername());
