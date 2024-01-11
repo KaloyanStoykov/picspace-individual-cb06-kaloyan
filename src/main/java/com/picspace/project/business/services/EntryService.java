@@ -1,11 +1,13 @@
 package com.picspace.project.business.services;
 
 import com.picspace.project.business.dbConverter.EntryConverter;
+import com.picspace.project.business.exception.EntryNotFoundException;
 import com.picspace.project.business.exception.InvalidParametersSuppliedException;
 import com.picspace.project.business.exception.UserNotFoundException;
 import com.picspace.project.domain.Entry;
 import com.picspace.project.domain.restRequestResponse.entryREST.CreateEntryRequest;
 import com.picspace.project.domain.restRequestResponse.entryREST.CreateEntryResponse;
+import com.picspace.project.domain.restRequestResponse.entryREST.DeleteEntryResponse;
 import com.picspace.project.domain.restRequestResponse.entryREST.GetEntriesByUserIdResponse;
 import com.picspace.project.persistence.EntryRepository;
 import com.picspace.project.persistence.UserRepository;
@@ -68,6 +70,14 @@ public class EntryService {
 
         return GetEntriesByUserIdResponse.builder().allUserEntries(allUserEntries).build();
 
+    }
+
+    public DeleteEntryResponse deleteEntry(Long entryId){
+        if(entryRepo.findById(entryId).isEmpty()){
+            throw new EntryNotFoundException();
+        }
+        entryRepo.deleteById(entryId);
+        return DeleteEntryResponse.builder().message("Entry deleted successfully").build();
     }
 
 }

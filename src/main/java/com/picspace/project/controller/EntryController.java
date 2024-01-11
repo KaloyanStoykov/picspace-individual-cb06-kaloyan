@@ -5,6 +5,7 @@ import com.picspace.project.business.services.EntryService;
 import com.picspace.project.business.services.UserService;
 import com.picspace.project.domain.restRequestResponse.entryREST.CreateEntryRequest;
 import com.picspace.project.domain.restRequestResponse.entryREST.CreateEntryResponse;
+import com.picspace.project.domain.restRequestResponse.entryREST.DeleteEntryResponse;
 import com.picspace.project.domain.restRequestResponse.entryREST.GetEntriesByUserIdResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -25,12 +26,17 @@ public class EntryController {
         return ResponseEntity.status(HttpStatus.CREATED).body(entryService.createEntry(request));
     }
 
-    @GetMapping()
+    @GetMapping("/user/{id}")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<GetEntriesByUserIdResponse> getUserEntries(){
-
-        return ResponseEntity.ok(entryService.getByUserId(userService.getByUserId(1L).getId()));
+    public ResponseEntity<GetEntriesByUserIdResponse> getUserEntries(@PathVariable Long id){
+        return ResponseEntity.ok(entryService.getByUserId(id));
     }
 
+    @DeleteMapping("{id}")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<DeleteEntryResponse> deleteUserEntry(@PathVariable Long id){
+        DeleteEntryResponse deleteEntryResponse = entryService.deleteEntry(id);
+        return ResponseEntity.ok(deleteEntryResponse);
+    }
 
 }

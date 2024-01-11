@@ -47,6 +47,8 @@ public class UserService {
         };
     }
 
+
+
     public UserEntity save(UserEntity newUser){
         if(newUser.getId() == null){
             newUser.setRegisteredAt(LocalDateTime.now());
@@ -67,28 +69,27 @@ public class UserService {
         Pageable pageable = PageRequest.of(page - 1, size);
         Specification<UserEntity> spec = UserSpecification.columnEqual(filterDTOList);
 
-        // Assuming there's a repository named userRepository
         Page<UserEntity> userPage = userRepo.findAll(spec, pageable);
 
         if (userPage.getContent().size() == 0) {
             throw new NoFilteredUsersFoundException();
         }
 
-        // Converting UserEntity list to User list
         List<User> allUsers = userPage.getContent().stream()
-                .map(userConverter::toPojo) // Assuming convertToUser is a method that converts UserEntity to User
+                .map(userConverter::toPojo)
                 .collect(Collectors.toList());
 
 
 
         return GetFilteredUsersResponse.builder()
                 .allUsers(allUsers)
-                .currentPage(userPage.getNumber() + 1) // Page number is zero-based in Pageable
+                .currentPage(userPage.getNumber() + 1)
                 .totalItems(userPage.getTotalElements())
                 .totalPages(userPage.getTotalPages())
                 .build();
 
     }
+
 
     public GetUserByIdResponse getByUserId(Long id) {
         Optional<UserEntity> foundUser = userRepo.findById(id);

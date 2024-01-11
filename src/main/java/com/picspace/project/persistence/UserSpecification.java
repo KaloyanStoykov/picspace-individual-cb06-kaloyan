@@ -21,12 +21,15 @@ public class UserSpecification {
         };
     }
     public static Specification<UserEntity> excludeAdmins() {
-        return new Specification<UserEntity>() {
-            @Override
-            public Predicate toPredicate(Root<UserEntity> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
-                Join<UserEntity, RoleEntity> rolesJoin = root.join("roles");
-                return criteriaBuilder.notEqual(rolesJoin.get("name"), "ROLE_ADMIN");
-            }
+        return (Root<UserEntity> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> {
+            Subquery<Long> subquery = query.subquery(Long.class);
+            Root<UserEntity> subRoot = subquery.from(UserEntity.class);
+            Join<UserEntity, RoleEntity> subRolesJoin = subRoot.join("roles");
+            subquery.select(subRoot.get("id")) // Assuming 'id' is the primary key of UserEntity
+                    .where(cb.equal(subRolesJoin.get("name"), "ROLE_ADMIN"));
+
+
+            return cb.not(root.get("id").in(subquery));
         };
     }
 

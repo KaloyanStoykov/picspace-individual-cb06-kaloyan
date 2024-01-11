@@ -148,7 +148,7 @@ public class EntryServiceTest {
     @Test
     void createEntry_ShouldThrowUserNotFoundExceptionWhenUserDoesNotExist() {
         // Arrange
-        Long nonExistentUserId = 999L; // assuming this ID does not exist
+        Long nonExistentUserId = 999L;
         CreateEntryRequest createEntryRequest = new CreateEntryRequest(nonExistentUserId, "Some content");
         EntryRepository mockEntryRepo = mock(EntryRepository.class);
         UserRepository mockUserRepo = mock(UserRepository.class);
@@ -162,6 +162,10 @@ public class EntryServiceTest {
         assertThrows(UserNotFoundException.class, () -> entryService.createEntry(createEntryRequest));
     }
 
+    @Test
+    void deleteEntry_ShouldDeleteEntryById() {
+
+    }
 
 
 
