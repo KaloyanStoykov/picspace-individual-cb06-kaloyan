@@ -2,15 +2,18 @@ package com.picspace.project.serviceTest;
 
 
 import com.picspace.project.business.dbConverter.EntryConverter;
+import com.picspace.project.business.exception.EntryNotFoundException;
 import com.picspace.project.business.exception.InvalidParametersSuppliedException;
+import com.picspace.project.business.exception.PermissionDeniedException;
 import com.picspace.project.business.exception.UserNotFoundException;
 import com.picspace.project.business.services.EntryService;
+import com.picspace.project.configuration.JwtService;
 import com.picspace.project.domain.Entry;
-import com.picspace.project.domain.restRequestResponse.entryREST.CreateEntryRequest;
-import com.picspace.project.domain.restRequestResponse.entryREST.GetEntriesByUserIdResponse;
+import com.picspace.project.domain.restRequestResponse.entryREST.*;
 import com.picspace.project.persistence.EntryRepository;
 import com.picspace.project.persistence.UserRepository;
 import com.picspace.project.persistence.entity.EntryEntity;
+import com.picspace.project.persistence.entity.RoleEntity;
 import com.picspace.project.persistence.entity.UserEntity;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,6 +23,9 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.*;
 import java.util.stream.Stream;
@@ -37,24 +43,34 @@ public class EntryServiceTest {
 
     @Mock
     private EntryConverter mockEntryConverter;
+    @Mock
+    private SecurityContext mockSecurityContext;
+    @Mock
+    private JwtService jwtService;
+
+    @Mock
+    private Authentication mockAuthentication;
 
     private EntryService entryService;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        entryService = new EntryService(mockEntryRepo, mockEntryConverter, mockUserRepo);
+        entryService = new EntryService(mockEntryRepo, mockEntryConverter, mockUserRepo, jwtService);
+
+        SecurityContextHolder.setContext(mockSecurityContext);
+
     }
 
 
     @Test
     void getByUserId_UserFound_ShouldReturnEntries() {
         Long userId = 1L;
-        UserEntity userEntity = new UserEntity(); // Assume this is correctly initialized
-        EntryEntity entryEntity1 = new EntryEntity(); // Assume this is correctly initialized
-        EntryEntity entryEntity2 = new EntryEntity(); // Assume this is correctly initialized
-        Entry entry1 = new Entry(); // Assume this is correctly initialized
-        Entry entry2 = new Entry(); // Assume this is correctly initialized
+        UserEntity userEntity = new UserEntity();
+        EntryEntity entryEntity1 = new EntryEntity();
+        EntryEntity entryEntity2 = new EntryEntity();
+        Entry entry1 = new Entry();
+        Entry entry2 = new Entry();
 
         when(mockUserRepo.findById(userId)).thenReturn(Optional.of(userEntity));
         when(mockEntryRepo.findByUserId(userId)).thenReturn(Arrays.asList(entryEntity1, entryEntity2));
@@ -82,7 +98,7 @@ public class EntryServiceTest {
         EntryConverter entryConverter = mock(EntryConverter.class);
 
         // Create an instance of EntryService with mocked repositories
-        EntryService entryService = new EntryService(mockEntryRepo, entryConverter, mockUserRepo);
+        EntryService entryService = new EntryService(mockEntryRepo, entryConverter, mockUserRepo, null);
 
         // Assert that UserNotFoundException is thrown
         assertThrows(UserNotFoundException.class, () -> {
@@ -114,7 +130,7 @@ public class EntryServiceTest {
 
 
 
-        EntryService entryService = new EntryService(mockEntryRepo, null,  userMockRepository);
+        EntryService entryService = new EntryService(mockEntryRepo, null,  userMockRepository, null);
         ArgumentCaptor<EntryEntity> entryEntityCaptor = ArgumentCaptor.forClass(EntryEntity.class);
 
         //Act
@@ -139,7 +155,7 @@ public class EntryServiceTest {
         EntryRepository mockRepo = mock(EntryRepository.class);
         UserRepository mockUerRepo = mock(UserRepository.class);
 
-        EntryService entryService = new EntryService(mockRepo, null, mockUerRepo);
+        EntryService entryService = new EntryService(mockRepo, null, mockUerRepo, null);
 
         assertThrows(InvalidParametersSuppliedException.class, () -> entryService.createEntry(createEntryRequest));
         verify(mockRepo, never()).save(any());
@@ -156,17 +172,158 @@ public class EntryServiceTest {
         // Simulate user not found
         when(mockUserRepo.findById(nonExistentUserId)).thenReturn(Optional.empty());
 
-        EntryService entryService = new EntryService(mockEntryRepo, null, mockUserRepo);
+        EntryService entryService = new EntryService(mockEntryRepo, null, mockUserRepo, null);
 
         // Act & Assert
         assertThrows(UserNotFoundException.class, () -> entryService.createEntry(createEntryRequest));
     }
 
-    @Test
-    void deleteEntry_ShouldDeleteEntryById() {
 
+
+    @Test
+    public void testUpdateEntry_Success() {
+        Long entryId = 1L;
+        String newContent = "Updated content";
+
+        EntryEntity mockEntryEntity = new EntryEntity();
+        mockEntryEntity.setContent("Original content");
+        mockEntryEntity.setEntryUser(UserEntity.builder().id(1L).build()); // Set the user of the entry
+
+        when(mockEntryRepo.findById(entryId)).thenReturn(Optional.of(mockEntryEntity));
+
+        UpdateEntryResponse response = entryService.updateEntry(entryId, newContent, 1L); // Pass the userId as well
+
+        assertEquals("Entry updated successfully!", response.getMessage());
+        verify(mockEntryRepo).save(mockEntryEntity);
+        assertEquals(newContent, mockEntryEntity.getContent());
     }
 
+    @Test
+    void testUpdateEntry_PermissionDenied() {
+        Long entryId = 1L;
+        String newContent = "Updated content";
+        Long userId = 1L;
+        Long wrongUserId = 2L;
+
+        EntryEntity mockEntryEntity = mock(EntryEntity.class);
+        when(mockEntryEntity.getEntryUser()).thenReturn(UserEntity.builder().id(userId).build());
+        when(mockEntryRepo.findById(entryId)).thenReturn(Optional.of(mockEntryEntity));
+
+        assertThrows(PermissionDeniedException.class, () -> {
+            entryService.updateEntry(entryId, newContent, wrongUserId);
+        });
+    }
+
+    @Test
+    public void testUpdateEntry_EntryNotFound() {
+        Long entryId = 1L;
+        String newContent = "Updated content";
+        Long userId = 1L;
+
+        when(mockEntryRepo.findById(entryId)).thenReturn(Optional.empty());
+
+        assertThrows(EntryNotFoundException.class, () -> {
+            entryService.updateEntry(entryId, newContent, userId);
+        });
+    }
+
+
+    @Test
+    public void deleteOwnEntry_ShouldSucceed() {
+        UserEntity nonAdmin = new UserEntity();
+        nonAdmin.setId(1L);
+        nonAdmin.setRoles(Collections.singletonList(new RoleEntity(2L, "ROLE_USER")));
+
+        EntryEntity entry = new EntryEntity();
+        entry.setId(1L);
+        entry.setEntryUser(nonAdmin);
+
+        when(mockEntryRepo.findById(1L)).thenReturn(Optional.of(entry));
+        when(mockSecurityContext.getAuthentication()).thenReturn(mockAuthentication);
+        when(mockAuthentication.getPrincipal()).thenReturn(nonAdmin);
+
+        DeleteEntryResponse response = entryService.deleteEntry(1L);
+
+        verify(mockEntryRepo).deleteById(1L);
+        assertEquals("Entry Deleted successfully", response.getMessage());
+    }
+
+    @Test
+    public void deleteOthersEntry_NonAdmin_ShouldFail() {
+        UserEntity nonAdmin = new UserEntity();
+        nonAdmin.setId(1L);
+        nonAdmin.setRoles(Collections.singletonList(new RoleEntity(2L, "ROLE_USER")));
+
+        UserEntity otherUser = new UserEntity();
+        otherUser.setId(2L);
+
+        EntryEntity entry = new EntryEntity();
+        entry.setId(1L);
+        entry.setEntryUser(otherUser);
+
+        when(mockEntryRepo.findById(1L)).thenReturn(Optional.of(entry));
+        when(mockSecurityContext.getAuthentication()).thenReturn(mockAuthentication);
+        when(mockAuthentication.getPrincipal()).thenReturn(nonAdmin);
+
+        assertThrows(PermissionDeniedException.class, () -> entryService.deleteEntry(1L));
+        verify(mockEntryRepo, never()).deleteById(1L);
+    }
+
+
+    @Test
+    public void deleteAnyEntry_Admin_ShouldSucceed() {
+        UserEntity admin = new UserEntity();
+        admin.setId(1L);
+        admin.setRoles(Collections.singletonList(new RoleEntity(2L, "ROLE_ADMIN")));
+
+        EntryEntity entry = new EntryEntity();
+        entry.setId(1L);
+        entry.setEntryUser(new UserEntity()); // Entry created by another user
+
+        when(mockEntryRepo.findById(1L)).thenReturn(Optional.of(entry));
+        when(mockSecurityContext.getAuthentication()).thenReturn(mockAuthentication);
+        when(mockAuthentication.getPrincipal()).thenReturn(admin);
+
+        DeleteEntryResponse response = entryService.deleteEntry(1L);
+
+        verify(mockEntryRepo).deleteById(1L);
+        assertEquals("Entry Deleted successfully", response.getMessage());
+    }
+
+    @Test
+    public void deleteNonExistentEntry_ShouldThrowException() {
+        when(mockEntryRepo.findById(1L)).thenReturn(Optional.empty());
+
+        assertThrows(EntryNotFoundException.class, () -> entryService.deleteEntry(1L));
+        verify(mockEntryRepo, never()).deleteById(1L);
+    }
+
+
+    @Test
+    public void getAllEntries_ShouldReturnAllEntries() {
+        // Arrange
+        EntryEntity entryEntity1 = EntryEntity.builder().id(1L).content("Content 1").build();
+        EntryEntity entryEntity2 = EntryEntity.builder().id(2L).content("Content 2").build();
+        Entry pojo1 = new Entry();
+        Entry pojo2 = new Entry();
+
+        List<EntryEntity> entryEntities = Arrays.asList(entryEntity1, entryEntity2);
+
+        when(mockEntryRepo.findAll()).thenReturn(entryEntities);
+        when(mockEntryConverter.toPojo(entryEntity1)).thenReturn(pojo1);
+        when(mockEntryConverter.toPojo(entryEntity2)).thenReturn(pojo2);
+
+        // Act
+        GetAllEntriesResponse response = entryService.getAllEntries();
+
+        // Assert
+        List<Entry> actualEntries = response.getAllEntries();
+        assertEquals(2, actualEntries.size());
+        assertTrue(actualEntries.contains(pojo1));
+        assertTrue(actualEntries.contains(pojo2));
+        verify(mockEntryRepo).findAll();
+
+    }
 
 
     private static Stream<Arguments> provideForCreateEntry_ShouldThrowExceptionWhenInvalidParametersAreSupplied(){

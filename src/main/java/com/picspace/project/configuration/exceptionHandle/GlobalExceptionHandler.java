@@ -1,9 +1,6 @@
 package com.picspace.project.configuration.exceptionHandle;
 
-import com.picspace.project.business.exception.EntryNotFoundException;
-import com.picspace.project.business.exception.NoFilteredUsersFoundException;
-import com.picspace.project.business.exception.UserNotFoundException;
-import com.picspace.project.business.exception.UsernameAlreadyExistsException;
+import com.picspace.project.business.exception.*;
 import jakarta.persistence.ElementCollection;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -55,6 +52,12 @@ public class GlobalExceptionHandler {
         ExceptionErrorResponse exceptionErrorResponse = ExceptionErrorResponse.builder().status(HttpStatus.NOT_FOUND.name()).message(exception.getMessage()).build();
 
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exceptionErrorResponse);
+    }
+
+    @ExceptionHandler({PermissionDeniedException.class})
+    public ResponseEntity<Object> handlePermissionDenied(PermissionDeniedException exception){
+        ExceptionErrorResponse exceptionErrorResponse = ExceptionErrorResponse.builder().status(HttpStatus.FORBIDDEN.name()).message(exception.getMessage()).build();
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(exceptionErrorResponse);
     }
 
 

@@ -3,22 +3,23 @@ package com.picspace.project.business.services;
 
 import com.picspace.project.business.dbConverter.UserConverter;
 import com.picspace.project.business.exception.NoFilteredUsersFoundException;
+import com.picspace.project.business.exception.PermissionDeniedException;
 import com.picspace.project.business.exception.UserNotFoundException;
 
 import com.picspace.project.domain.FilterDTO;
 import com.picspace.project.domain.User;
-import com.picspace.project.domain.restRequestResponse.userREST.GetAllUsersResponse;
-import com.picspace.project.domain.restRequestResponse.userREST.GetFilteredUsersResponse;
-import com.picspace.project.domain.restRequestResponse.userREST.GetUserByIdResponse;
-import com.picspace.project.domain.restRequestResponse.userREST.UpdateUserResponse;
+import com.picspace.project.domain.restRequestResponse.userREST.*;
 import com.picspace.project.persistence.UserRepository;
 import com.picspace.project.persistence.UserSpecification;
 import com.picspace.project.persistence.entity.UserEntity;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Bean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -38,6 +39,7 @@ public class UserService {
     private final UserRepository userRepo;
     private final UserConverter userConverter;
 
+    @Bean
     public UserDetailsService userDetailsService(){
         return new UserDetailsService() {
             @Override
@@ -103,6 +105,34 @@ public class UserService {
 
         throw new UserNotFoundException();
     }
+
+    public DeleteUserResponse deleteUserById(Long userId){
+
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserEntity userEntity = (UserEntity) authentication.getPrincipal();
+        Long currentUserId = userEntity.getId();
+
+
+        boolean isAdmin = userEntity.getRoles().stream()
+                .anyMatch(role -> "ROLE_ADMIN".equals(role.getName()));
+
+        if(isAdmin){
+            if(userRepo.findById(userId).isPresent()){
+                userRepo.deleteById(userId);
+                return DeleteUserResponse.builder().message("User Deleted Successfully").build();
+            }
+            throw new UserNotFoundException();
+
+        }
+
+        throw new PermissionDeniedException();
+
+
+
+    }
+
+
 
 
     public GetAllUsersResponse getAllUsers(int page, int size) {

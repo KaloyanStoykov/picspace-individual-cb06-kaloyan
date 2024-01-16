@@ -2,14 +2,12 @@ package com.picspace.project.serviceTest;
 
 import com.picspace.project.business.dbConverter.UserConverter;
 import com.picspace.project.business.exception.NoFilteredUsersFoundException;
+import com.picspace.project.business.exception.PermissionDeniedException;
 import com.picspace.project.business.exception.UserNotFoundException;
 import com.picspace.project.business.services.UserService;
 import com.picspace.project.domain.FilterDTO;
 import com.picspace.project.domain.User;
-import com.picspace.project.domain.restRequestResponse.userREST.GetAllUsersResponse;
-import com.picspace.project.domain.restRequestResponse.userREST.GetFilteredUsersResponse;
-import com.picspace.project.domain.restRequestResponse.userREST.GetUserByIdResponse;
-import com.picspace.project.domain.restRequestResponse.userREST.UpdateUserResponse;
+import com.picspace.project.domain.restRequestResponse.userREST.*;
 import com.picspace.project.persistence.UserRepository;
 import com.picspace.project.persistence.entity.EntryEntity;
 import com.picspace.project.persistence.entity.RoleEntity;
@@ -22,6 +20,8 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -333,6 +333,77 @@ public class UserServiceTest {
         assertThrows(UserNotFoundException.class, () ->
                 userService.updateUser(userId, "Name", "LastName", "Username", 25));
     }
+
+
+
+    @Test
+    public void testDeleteUserById_Admin_ShouldDeleteUser() {
+        // Setup
+        UserEntity adminUser = mock(UserEntity.class);
+        when(adminUser.getId()).thenReturn(1L);
+        when(adminUser.getRoles()).thenReturn(Set.of(new RoleEntity(1L, "ROLE_USER"), new RoleEntity(2L, "ROLE_ADMIN")));
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(adminUser);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        List<UserEntity> userEntities = new ArrayList<>();
+        UserEntity userEntity = UserEntity.builder().id(1L).name("Kal").build();
+        UserEntity userToDelete = UserEntity.builder().id(2L).name("Kals").build();
+        userEntities.add(userEntity);
+        userEntities.add(userToDelete);
+
+
+        when(userRepo.findById(2L)).thenReturn(Optional.of(userToDelete));
+        doAnswer(invocation -> {
+            Long id = invocation.getArgument(0);
+            userEntities.removeIf(user -> user.getId().equals(id));
+            return null;
+        }).when(userRepo).deleteById(2L);
+
+
+        int initialSize = userEntities.size();
+
+
+        userService.deleteUserById(2L);
+
+
+        assertEquals(initialSize - 1, userEntities.size());
+        assertFalse(userEntities.contains(userToDelete));
+    }
+
+
+
+    @Test
+    public void testDeleteUserById_NonAdminUser_Failure() {
+
+        UserEntity nonAdminUser = mock(UserEntity.class);
+        when(nonAdminUser.getId()).thenReturn(1L);
+        when(nonAdminUser.getRoles()).thenReturn(Set.of(new RoleEntity(1L, "ROLE_USER")));
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(nonAdminUser);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+
+        assertThrows(PermissionDeniedException.class, () -> userService.deleteUserById(2L));
+    }
+
+    @Test
+    public void testDeleteUserById_UserNotFound() {
+        // Setup admin user
+        UserEntity adminUser = mock(UserEntity.class);
+        when(adminUser.getId()).thenReturn(1L);
+        when(adminUser.getRoles()).thenReturn(Set.of(new RoleEntity(1L, "ROLE_ADMIN")));
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(adminUser);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        // Mocking userRepo to simulate user not found
+        when(userRepo.findById(2L)).thenReturn(Optional.empty());
+
+        // Assert that UserNotFoundException is thrown
+        assertThrows(UserNotFoundException.class, () -> userService.deleteUserById(2L));
+    }
+
 
 
 

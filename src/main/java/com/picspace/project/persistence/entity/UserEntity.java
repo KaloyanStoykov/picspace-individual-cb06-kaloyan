@@ -70,13 +70,7 @@ public class UserEntity implements UserDetails {
 
 
 
-    @OneToMany(cascade = CascadeType.ALL)
-    @JoinTable(
-            name="entries",
-            joinColumns = @JoinColumn(name= "id"),
-            inverseJoinColumns = @JoinColumn(name = "user_id")
-
-    )
+    @OneToMany(mappedBy="entryUser", cascade = CascadeType.ALL)
     private List<EntryEntity> userEntries;
 
 

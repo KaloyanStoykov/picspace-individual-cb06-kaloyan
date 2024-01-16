@@ -1,10 +1,7 @@
 package com.picspace.project.controller;
 
 import com.picspace.project.business.services.UserService;
-import com.picspace.project.domain.restRequestResponse.userREST.GetAllUsersResponse;
-import com.picspace.project.domain.restRequestResponse.userREST.GetUserByIdResponse;
-import com.picspace.project.domain.restRequestResponse.userREST.UpdateUserRequest;
-import com.picspace.project.domain.restRequestResponse.userREST.UpdateUserResponse;
+import com.picspace.project.domain.restRequestResponse.userREST.*;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -28,6 +25,12 @@ public class UserController {
     @GetMapping("{id}")
     public ResponseEntity<GetUserByIdResponse> getUserById(@PathVariable("id") Long userId){
         return ResponseEntity.ok(userService.getByUserId(userId));
+    }
+
+    @DeleteMapping("{id}")
+    public ResponseEntity<DeleteUserResponse> deleteUser(@PathVariable("id") Long userId){
+        DeleteUserResponse deleteUserResponse = userService.deleteUserById(userId);
+        return ResponseEntity.ok().body(deleteUserResponse);
     }
 
     @PutMapping("{id}")
