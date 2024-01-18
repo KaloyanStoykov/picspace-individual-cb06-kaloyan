@@ -1,11 +1,14 @@
 package com.picspace.project.controller;
 
 import com.picspace.project.business.services.UserService;
+import com.picspace.project.domain.FilterDTO;
 import com.picspace.project.domain.restRequestResponse.userREST.*;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/users")
@@ -20,6 +23,12 @@ public class UserController {
     public ResponseEntity<GetAllUsersResponse> getAllUsers(@RequestParam(defaultValue =  "0") int page, @RequestParam(defaultValue = "10") int size){
         GetAllUsersResponse getAllUsersResponse = userService.getAllUsers(page, size);
         return ResponseEntity.ok().body(getAllUsersResponse);
+    }
+
+    @PostMapping("/filter-users")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<GetFilteredUsersResponse> getFilteredUsers(@RequestBody List<FilterDTO> filterDTOList, @RequestParam(defaultValue = "1") int page, @RequestParam(defaultValue = "10") int size){
+        return ResponseEntity.ok(userService.getFilteredUsers(filterDTOList, page, size));
     }
 
     @GetMapping("{id}")
