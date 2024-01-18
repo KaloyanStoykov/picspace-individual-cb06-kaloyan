@@ -15,9 +15,7 @@ build:
   stage: build
   script:
     - ./gradlew assemble
-  artifacts:
-    paths:
-      - build/libs/picspace-0.0.1-SNAPSHOT.jar
+
 
 test:
   stage: test
