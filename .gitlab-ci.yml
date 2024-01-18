@@ -1,5 +1,6 @@
+# Disable the Gradle daemon for Continuous Integration servers as correctness # is usually a priority over speed in CI environments. Using a fresh # runtime for each build is more reliable since the runtime is completely # isolated from any previous builds.
 variables:
-  GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.caching=true"
+  GRADLE_OPTS: "-Dorg.gradle.daemon=false"
   DOCKER_IMAGE: kiko12122/picspace_kaloyan-s3cb06
   DOCKER_TAG: $CI_COMMIT_REF_SLUG
 
@@ -9,21 +10,12 @@ stages:
   - sonarqube-check
   - deploy
 
-cache:
-  key: "$CI_COMMIT_REF_NAME"
-  paths:
-    - .gradle/wrapper
-    - .gradle/caches
-    - build/libs
 
 build:
   stage: build
   script:
-    - ./gradlew assemble --parallel
-  artifacts:
-    paths:
-      - build/libs/picspace-0.0.1-SNAPSHOT.jar
-    expire_in: 1 hour
+    - ./gradlew assemble
+  
 
 test:
   stage: test
@@ -34,19 +26,20 @@ sonarqube-check:
   stage: sonarqube-check
   image: gradle:8.2.0-jdk17-jammy
   variables:
-    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
-    GIT_DEPTH: "0"
+    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar" # Defines the location of the analysis task cache
+    GIT_DEPTH: "0" # Tells git to fetch all the branches of the project, required by the analysis task
   cache:
     key: "${CI_JOB_NAME}"
     paths:
       - .sonar/cache
-  script: gradle sonarqube
+  script: gradle sonar
   allow_failure: true
   only:
     - merge_requests
     - master
     - main
     - develop
+
 
 deploy:
   stage: deploy
@@ -61,3 +54,4 @@ deploy:
     - docker push ${DOCKER_IMAGE}:${DOCKER_TAG}
   only:
     - main
+
