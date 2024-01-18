@@ -15,6 +15,10 @@ build:
   stage: build
   script:
     - ./gradlew assemble
+  artifacts:
+    paths:
+      - build/libs/*.jar
+    expire_in: 1 hour
 
 
 test:
