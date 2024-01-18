@@ -15,7 +15,10 @@ build:
   stage: build
   script:
     - ./gradlew assemble
-  
+  artifacts:
+    paths:
+      - build/libs/picspace-0.0.1-SNAPSHOT.jar
+    expire_in: 1 hour
 
 test:
   stage: test
@@ -54,4 +57,3 @@ deploy:
     - docker push ${DOCKER_IMAGE}:${DOCKER_TAG}
   only:
     - main
-
