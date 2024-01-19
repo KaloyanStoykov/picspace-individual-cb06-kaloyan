@@ -21,6 +21,7 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -337,6 +338,62 @@ public class UserServiceTest {
                 userService.updateUser(userId, "Name", "LastName", "Username", 25));
     }
 
+    // Utility method to mock authentication with a specific user
+    private void mockAuthentication(UserEntity user) {
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(user);
+        SecurityContext securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+    }
+
+    @Test
+    public void testDeleteUserById_Admin_ShouldDeleteUser() {
+        // Setup admin user
+        UserEntity adminUser = new UserEntity();
+        adminUser.setId(1L);
+        adminUser.setRoles(Arrays.asList(new RoleEntity(2L, "ROLE_ADMIN")));
+        mockAuthentication(adminUser);
+
+        Long userIdToDelete = 2L;
+        when(userRepo.findById(userIdToDelete)).thenReturn(Optional.of(new UserEntity()));
+
+        // Act
+        DeleteUserResponse response = userService.deleteUserById(userIdToDelete);
+
+        // Assert
+        assertEquals("User Deleted Successfully", response.getMessage());
+        verify(userRepo).deleteById(userIdToDelete);
+    }
+
+    @Test
+    public void testDeleteUserById_NonAdminUser_Failure() {
+        // Setup non-admin user
+        UserEntity nonAdminUser = new UserEntity();
+        nonAdminUser.setId(1L);
+        nonAdminUser.setRoles(Arrays.asList(new RoleEntity(1L, "ROLE_USER")));
+        mockAuthentication(nonAdminUser);
+
+        Long userIdToDelete = 2L;
+
+        // Act & Assert
+        assertThrows(PermissionDeniedException.class, () -> userService.deleteUserById(userIdToDelete));
+    }
+
+    @Test
+    public void testDeleteUserById_UserNotFound() {
+        // Setup admin user
+        UserEntity adminUser = new UserEntity();
+        adminUser.setId(1L);
+        adminUser.setRoles(Arrays.asList(new RoleEntity(2L, "ROLE_ADMIN")));
+        mockAuthentication(adminUser);
+
+        Long userIdToDelete = 2L;
+        when(userRepo.findById(userIdToDelete)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThrows(UserNotFoundException.class, () -> userService.deleteUserById(userIdToDelete));
+    }
 
 
 //    @Test
@@ -405,8 +462,6 @@ public class UserServiceTest {
 //        // Assert that UserNotFoundException is thrown
 //        assertThrows(UserNotFoundException.class, () -> userService.deleteUserById(2L));
 //    }
-
-
 
 
 }
