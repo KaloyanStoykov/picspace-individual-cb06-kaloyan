@@ -3,6 +3,10 @@ variables:
   GRADLE_OPTS: "-Dorg.gradle.daemon=false"
   DOCKER_IMAGE: kiko12122/picspace_kaloyan-s3cb06
   DOCKER_TAG: $CI_COMMIT_REF_SLUG
+  F_USE_FASTZIP: "true"
+  TRANSFER_METER_FREQUENCY: "2s"
+  ARTIFACT_COMPRESSION_LEVEL: "fastest"
+  CACHE_COMPRESSION_LEVEL: "fastest"
 
 stages:
   - build
