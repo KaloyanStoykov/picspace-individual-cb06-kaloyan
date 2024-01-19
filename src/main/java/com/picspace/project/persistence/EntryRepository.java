@@ -11,4 +11,7 @@ public interface EntryRepository extends JpaRepository<EntryEntity, Long> {
 
     @Query("SELECT e FROM EntryEntity e where e.entryUser.id = :userId")
     List<EntryEntity> findByUserId(Long userId);
+
+    @Query("SELECT COUNT(e) FROM EntryEntity e")
+    Long countTotalEntries();
 }

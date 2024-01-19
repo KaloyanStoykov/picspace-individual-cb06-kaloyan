@@ -49,7 +49,7 @@ public class EntryService {
             EntryEntity entryEntity = EntryEntity.builder().entryUser(userEntity.get()).content(request.getContent()).dateCreated(new Date()).build();
 
             entryRepo.save(entryEntity);
-            return CreateEntryResponse.builder().postId(entryEntity.getId()).message("Entry created successfully!").build();
+            return CreateEntryResponse.builder().postId(entryEntity.getId()).message("Entry created successfully!").userId(userEntity.get().getId()).build();
 
         }
 
@@ -118,6 +118,10 @@ public class EntryService {
         }).orElseThrow(EntryNotFoundException::new);
 
 
+    }
+
+    public GetCountOfEntriesResponse countEntries(){
+        return GetCountOfEntriesResponse.builder().countOfEntries(entryRepo.countTotalEntries()).build();
     }
 
 }

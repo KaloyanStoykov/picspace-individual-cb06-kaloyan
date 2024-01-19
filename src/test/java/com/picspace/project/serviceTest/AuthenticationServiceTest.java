@@ -89,13 +89,10 @@ public class AuthenticationServiceTest {
         request.setLastName("Stoykov");
         request.setAge(18);
 
-        // Act
         JwtAuthenticationResponse response = authService.signup(request);
 
-        // Assert
         assertNotNull(response.getToken());
         assertEquals("mockJwtToken", response.getToken());
-        // You can also add assertions to check the behavior of mocks, if necessary
         verify(userRepository, times(1)).findByUsername("testUser");
         verify(roleRepository, times(1)).findByName("ROLE_USER");
         verify(userService, times(1)).save(any(UserEntity.class));
@@ -116,12 +113,10 @@ public class AuthenticationServiceTest {
 
 
 
-        // Act and Assert
         assertThrows(UsernameAlreadyExistsException.class, () -> {
             authService.signup(request);
         });
 
-        // Verify that no other methods are called after finding the username
         verify(userRepository, times(1)).findByUsername("existingUser");
         verify(roleRepository, never()).findByName(anyString());
         verify(userService, never()).save(any(UserEntity.class));
@@ -129,7 +124,6 @@ public class AuthenticationServiceTest {
 
     @Test
     void testDefaultRoleNotFoundException() {
-        // Arrange
         when(userRepository.findByUsername("newUser")).thenReturn(Optional.empty());
         when(roleRepository.findByName("ROLE_MANAGER")).thenReturn(Optional.empty());
 
@@ -138,12 +132,10 @@ public class AuthenticationServiceTest {
         request.setPassword("password");
 
 
-        // Act and Assert
         assertThrows(IllegalArgumentException.class, () -> {
             authService.signup(request);
         });
 
-        // Verify that the userRepository is called, but userService.save is never reached
         verify(userRepository, times(1)).findByUsername("newUser");
         verify(roleRepository, times(1)).findByName("ROLE_USER");
         verify(userService, never()).save(any(UserEntity.class));
@@ -157,16 +149,12 @@ public class AuthenticationServiceTest {
         requestLogin.setUsername("randomUsername");
         requestLogin.setPassword("randomPassword");
 
-        // Mocking userRepository to return an empty Optional
         when(userRepository.findByUsername("randomUsername")).thenReturn(Optional.empty());
 
-        // Expecting the UsernameNotFoundException to be thrown
         assertThrows(UsernameNotFoundException.class, () -> authService.signin(requestLogin));
 
-        // Verifying userRepository was called with the username
         verify(userRepository, times(1)).findByUsername("randomUsername");
 
-        // Verifying jwtService.generateToken was never called
         verify(jwtService, never()).generateToken(any(), anyLong());
     }
 

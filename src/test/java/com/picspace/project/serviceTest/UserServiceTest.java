@@ -155,23 +155,18 @@ public class UserServiceTest {
         int size = 10;
         String filterName = "John";
 
-        // Set up filter to search for users with the name "John"
+
         List<FilterDTO> filterDTOList = Arrays.asList(new FilterDTO("name", filterName));
 
-        // Create mock UserEntities, only one matching the filter
         UserEntity userEntity1 = new UserEntity(1L, "John", "Doe", "johndoe", "password123", 30, LocalDateTime.now(), null, null);
         UserEntity userEntity2 = new UserEntity(2L, "Jane", "Doe", "janedoe", "password456", 25, LocalDateTime.now(), null, null);
 
-        // Only include the user that matches the filter
         List<UserEntity> filteredUserEntities = Arrays.asList(userEntity1);
 
-        // Mock the Page object to return only the filtered user
         Page<UserEntity> userPage = new PageImpl<>(filteredUserEntities, PageRequest.of(page - 1, size), filteredUserEntities.size());
 
-        // Mocking findAll with a Specification<UserEntity> and a Pageable
         when(userRepo.findAll(any(Specification.class), any(PageRequest.class))).thenReturn(userPage);
 
-        // Create User DTO for the filtered user
         User user1 = User.builder()
                 .name("John")
                 .lastName("Doe")
@@ -181,49 +176,36 @@ public class UserServiceTest {
                 .registeredAt(LocalDateTime.now())
                 .build();
 
-        // Mock the conversion of the UserEntity to User DTO
         when(userConverter.toPojo(userEntity1)).thenReturn(user1);
 
-        // Act
         GetFilteredUsersResponse response = userService.getFilteredUsers(filterDTOList, page, size);
 
-        // Assert
+
         assertNotNull(response);
         assertFalse(response.getAllUsers().isEmpty());
         assertEquals(1, response.getAllUsers().size()); // Only 1 user should be returned as per the filter
         assertEquals(filteredUserEntities.size(), response.getTotalItems());
         assertEquals(1, response.getTotalPages());
 
-        // Verify the interactions
         verify(userRepo, times(1)).findAll(any(Specification.class), any(PageRequest.class));
         verify(userConverter, times(1)).toPojo(userEntity1);
-        // Ensure no interaction with userEntity2 as it does not match the filter
         verify(userConverter, never()).toPojo(userEntity2);
     }
 
 
     @Test
     public void testGetFilteredUsers_NoMatchingUsers() {
-        // Arrange
         int page = 1;
         int size = 10;
         String filterName = "John";
 
-        // Set up filter to search for users with the name "John"
         List<FilterDTO> filterDTOList = Arrays.asList(new FilterDTO("name", filterName));
 
-        // Create an empty list to simulate no matching users
         List<UserEntity> noMatchingUserEntities = new ArrayList<>();
 
-        // Mock the Page object to return an empty list
         Page<UserEntity> emptyUserPage = new PageImpl<>(noMatchingUserEntities, PageRequest.of(page - 1, size), noMatchingUserEntities.size());
 
-        // Mocking findAll with a Specification<UserEntity> and a Pageable to return an empty page
         when(userRepo.findAll(any(Specification.class), any(PageRequest.class))).thenReturn(emptyUserPage);
-
-        // Act
-
-
 
         assertThrows(NoFilteredUsersFoundException.class, () -> {
             userService.getFilteredUsers(filterDTOList, page, size);
@@ -240,21 +222,18 @@ public class UserServiceTest {
 
         List<EntryEntity> entries = Collections.emptyList();
 
-        // Arrange
         LocalDateTime initialTime = LocalDateTime.now().minusDays(1);
         UserEntity existingUser = new UserEntity(1L, "Jane", "Doe", "janedoe", "pass2", 25, initialTime, roles, entries);
 
         when(userRepo.save(existingUser)).thenReturn(existingUser);
 
-        // Act
         UserEntity result = userService.save(existingUser);
 
-        // Assert
+
         assertNotNull(result);
         assertEquals(initialTime, result.getRegisteredAt()); // Ensure registeredAt is unchanged
         assertEquals(existingUser, result);
 
-        // Verify interactions
         verify(userRepo, times(1)).save(existingUser);
     }
 
@@ -265,39 +244,33 @@ public class UserServiceTest {
         roles.add(roleEntity);
 
         List<EntryEntity> entries = Collections.emptyList();
-        // Arrange
+
         String username = "johndoe";
         UserEntity userEntity = new UserEntity(1L, "John", "Doe", username, "pass1", 30, LocalDateTime.now(), roles, entries);
         when(userRepo.findByUsername(username)).thenReturn(Optional.of(userEntity));
 
-        // Act
         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-        // Assert
         assertNotNull(userDetails);
         assertEquals(username, userDetails.getUsername());
 
-        // Verify interactions
         verify(userRepo, times(1)).findByUsername(username);
     }
 
     @Test
     public void testLoadUserByUsername_UserNotFound() {
-        // Arrange
         String username = "unknownuser";
         when(userRepo.findByUsername(username)).thenReturn(Optional.empty());
 
-        // Act
 
         assertThrows(UsernameNotFoundException.class, () -> userDetailsService.loadUserByUsername(username));
 
-        // Assert is handled by the expected exception
     }
 
 
     @Test
     public void testUpdateUser_Success() {
-        // Arrange
+
         Long userId = 1L;
         String newName = "NewName";
         String newLastName = "NewLastName";
@@ -314,10 +287,10 @@ public class UserServiceTest {
         when(userRepo.findById(userId)).thenReturn(Optional.of(existingUser));
         when(userRepo.save(any(UserEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        // Act
+
         UpdateUserResponse updatedUserResponse = userService.updateUser(userId, newName, newLastName, newUsername, newAge);
 
-        // Assert
+
         assertNotNull(updatedUserResponse);
         assertEquals("User updated successfully!", updatedUserResponse.getMessage());
         assertEquals(userId, updatedUserResponse.getUserId());
@@ -328,17 +301,17 @@ public class UserServiceTest {
 
     @Test
     public void testUpdateUser_UserNotFound() {
-        // Arrange
+
         Long userId = 2L;
 
         when(userRepo.findById(userId)).thenReturn(Optional.empty());
 
-        // Act & Assert
+
         assertThrows(UserNotFoundException.class, () ->
                 userService.updateUser(userId, "Name", "LastName", "Username", 25));
     }
 
-    // Utility method to mock authentication with a specific user
+
     private void mockAuthentication(UserEntity user) {
         Authentication authentication = mock(Authentication.class);
         when(authentication.getPrincipal()).thenReturn(user);
@@ -349,7 +322,7 @@ public class UserServiceTest {
 
     @Test
     public void testDeleteUserById_Admin_ShouldDeleteUser() {
-        // Setup admin user
+
         UserEntity adminUser = new UserEntity();
         adminUser.setId(1L);
         adminUser.setRoles(Arrays.asList(new RoleEntity(2L, "ROLE_ADMIN")));
@@ -358,17 +331,17 @@ public class UserServiceTest {
         Long userIdToDelete = 2L;
         when(userRepo.findById(userIdToDelete)).thenReturn(Optional.of(new UserEntity()));
 
-        // Act
+
         DeleteUserResponse response = userService.deleteUserById(userIdToDelete);
 
-        // Assert
+
         assertEquals("User Deleted Successfully", response.getMessage());
         verify(userRepo).deleteById(userIdToDelete);
     }
 
     @Test
     public void testDeleteUserById_NonAdminUser_Failure() {
-        // Setup non-admin user
+
         UserEntity nonAdminUser = new UserEntity();
         nonAdminUser.setId(1L);
         nonAdminUser.setRoles(Arrays.asList(new RoleEntity(1L, "ROLE_USER")));
@@ -376,13 +349,13 @@ public class UserServiceTest {
 
         Long userIdToDelete = 2L;
 
-        // Act & Assert
+
         assertThrows(PermissionDeniedException.class, () -> userService.deleteUserById(userIdToDelete));
     }
 
     @Test
     public void testDeleteUserById_UserNotFound() {
-        // Setup admin user
+
         UserEntity adminUser = new UserEntity();
         adminUser.setId(1L);
         adminUser.setRoles(Arrays.asList(new RoleEntity(2L, "ROLE_ADMIN")));
@@ -391,77 +364,23 @@ public class UserServiceTest {
         Long userIdToDelete = 2L;
         when(userRepo.findById(userIdToDelete)).thenReturn(Optional.empty());
 
-        // Act & Assert
+
         assertThrows(UserNotFoundException.class, () -> userService.deleteUserById(userIdToDelete));
     }
 
+    @Test
+    void testGetCountOfUsersRegisteredBetween() {
 
-//    @Test
-//    public void testDeleteUserById_Admin_ShouldDeleteUser() {
-//        // Setup
-//        UserEntity adminUser = mock(UserEntity.class);
-//        when(adminUser.getId()).thenReturn(1L);
-//        when(adminUser.getRoles()).thenReturn(Set.of(new RoleEntity(1L, "ROLE_USER"), new RoleEntity(2L, "ROLE_ADMIN")));
-//        when(authentication.getPrincipal()).thenReturn(adminUser);
-//        SecurityContextHolder.getContext().setAuthentication(authentication);
-//
-//        List<UserEntity> userEntities = new ArrayList<>();
-//        UserEntity userEntity = UserEntity.builder().id(1L).name("Kal").build();
-//        UserEntity userToDelete = UserEntity.builder().id(2L).name("Kals").build();
-//        userEntities.add(userEntity);
-//        userEntities.add(userToDelete);
-//
-//
-//        when(userRepo.findById(2L)).thenReturn(Optional.of(userToDelete));
-//        doAnswer(invocation -> {
-//            Long id = invocation.getArgument(0);
-//            userEntities.removeIf(user -> user.getId().equals(id));
-//            return null;
-//        }).when(userRepo).deleteById(2L);
-//
-//
-//        int initialSize = userEntities.size();
-//
-//
-//        userService.deleteUserById(2L);
-//
-//
-//        assertEquals(initialSize - 1, userEntities.size());
-//        assertFalse(userEntities.contains(userToDelete));
-//    }
-//
-//
-//
-//    @Test
-//    public void testDeleteUserById_NonAdminUser_Failure() {
-//
-//        UserEntity nonAdminUser = mock(UserEntity.class);
-//        when(nonAdminUser.getId()).thenReturn(1L);
-//        when(nonAdminUser.getRoles()).thenReturn(Set.of(new RoleEntity(1L, "ROLE_USER")));
-//        Authentication authentication = mock(Authentication.class);
-//        when(authentication.getPrincipal()).thenReturn(nonAdminUser);
-//        SecurityContextHolder.getContext().setAuthentication(authentication);
-//
-//
-//        assertThrows(PermissionDeniedException.class, () -> userService.deleteUserById(2L));
-//    }
-//
-//    @Test
-//    public void testDeleteUserById_UserNotFound() {
-//        // Setup admin user
-//        UserEntity adminUser = mock(UserEntity.class);
-//        when(adminUser.getId()).thenReturn(1L);
-//        when(adminUser.getRoles()).thenReturn(Set.of(new RoleEntity(1L, "ROLE_ADMIN")));
-//        Authentication authentication = mock(Authentication.class);
-//        when(authentication.getPrincipal()).thenReturn(adminUser);
-//        SecurityContextHolder.getContext().setAuthentication(authentication);
-//
-//        // Mocking userRepo to simulate user not found
-//        when(userRepo.findById(2L)).thenReturn(Optional.empty());
-//
-//        // Assert that UserNotFoundException is thrown
-//        assertThrows(UserNotFoundException.class, () -> userService.deleteUserById(2L));
-//    }
+        Long expectedCount = 10L;
+        when(userRepo.countUsersRegistered()).thenReturn(expectedCount);
+
+
+        GetCountOfUsers actualCount = userService.getCountofUsersRegistered();
+
+
+        assertEquals(expectedCount, actualCount.getCountOfUsers());
+    }
+
 
 
 }

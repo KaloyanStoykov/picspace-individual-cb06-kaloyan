@@ -87,25 +87,20 @@ public class EntryServiceTest {
 
     @Test
     void getEntriesByUserId_shouldThrowUserNotFoundException() {
-        Long nonExistentUserId = 99L; // An ID that does not exist in the repository
+        Long nonExistentUserId = 99L;
 
-        // Mock the userRepository to return empty for non-existing user
         UserRepository mockUserRepo = mock(UserRepository.class);
         when(mockUserRepo.findById(nonExistentUserId)).thenReturn(Optional.empty());
 
-        // Mock the EntryRepository and EntryConverter
         EntryRepository mockEntryRepo = mock(EntryRepository.class);
         EntryConverter entryConverter = mock(EntryConverter.class);
 
-        // Create an instance of EntryService with mocked repositories
         EntryService entryService = new EntryService(mockEntryRepo, entryConverter, mockUserRepo, null);
 
-        // Assert that UserNotFoundException is thrown
         assertThrows(UserNotFoundException.class, () -> {
             entryService.getByUserId(nonExistentUserId);
         });
 
-        // Verify that entryRepo.findByUserId is not called
         verify(mockEntryRepo, never()).findByUserId(nonExistentUserId);
     }
 
@@ -118,7 +113,8 @@ public class EntryServiceTest {
 
 
         Long userId = createEntryRequest.getUserId();
-        //Call mock user repo in order to get user
+
+
         UserEntity mockUser = new UserEntity();
         mockUser.setId(userId);
         UserRepository userMockRepository = mock(UserRepository.class);
@@ -133,11 +129,11 @@ public class EntryServiceTest {
         EntryService entryService = new EntryService(mockEntryRepo, null,  userMockRepository, null);
         ArgumentCaptor<EntryEntity> entryEntityCaptor = ArgumentCaptor.forClass(EntryEntity.class);
 
-        //Act
+
         entryService.createEntry(createEntryRequest);
 
 
-        //Assert
+
         verify(mockEntryRepo, times(1)).save(any());
         verify(mockEntryRepo).save(entryEntityCaptor.capture());
 
@@ -163,18 +159,18 @@ public class EntryServiceTest {
 
     @Test
     void createEntry_ShouldThrowUserNotFoundExceptionWhenUserDoesNotExist() {
-        // Arrange
+
         Long nonExistentUserId = 999L;
         CreateEntryRequest createEntryRequest = new CreateEntryRequest(nonExistentUserId, "Some content");
         EntryRepository mockEntryRepo = mock(EntryRepository.class);
         UserRepository mockUserRepo = mock(UserRepository.class);
 
-        // Simulate user not found
+
         when(mockUserRepo.findById(nonExistentUserId)).thenReturn(Optional.empty());
 
         EntryService entryService = new EntryService(mockEntryRepo, null, mockUserRepo, null);
 
-        // Act & Assert
+
         assertThrows(UserNotFoundException.class, () -> entryService.createEntry(createEntryRequest));
     }
 
@@ -301,7 +297,7 @@ public class EntryServiceTest {
 
     @Test
     public void getAllEntries_ShouldReturnAllEntries() {
-        // Arrange
+
         EntryEntity entryEntity1 = EntryEntity.builder().id(1L).content("Content 1").build();
         EntryEntity entryEntity2 = EntryEntity.builder().id(2L).content("Content 2").build();
         Entry pojo1 = new Entry();
@@ -313,16 +309,28 @@ public class EntryServiceTest {
         when(mockEntryConverter.toPojo(entryEntity1)).thenReturn(pojo1);
         when(mockEntryConverter.toPojo(entryEntity2)).thenReturn(pojo2);
 
-        // Act
+
         GetAllEntriesResponse response = entryService.getAllEntries();
 
-        // Assert
+
         List<Entry> actualEntries = response.getAllEntries();
         assertEquals(2, actualEntries.size());
         assertTrue(actualEntries.contains(pojo1));
         assertTrue(actualEntries.contains(pojo2));
         verify(mockEntryRepo).findAll();
 
+    }
+
+    @Test
+    void testCountEntries() {
+
+        Long expectedCount = 10L;
+        when(mockEntryRepo.countTotalEntries()).thenReturn(expectedCount);
+
+
+        GetCountOfEntriesResponse response = entryService.countEntries();
+
+        assertEquals(expectedCount, response.getCountOfEntries(), "The count of entries should match the expected value");
     }
 
 

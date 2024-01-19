@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -29,6 +30,11 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<GetFilteredUsersResponse> getFilteredUsers(@RequestBody List<FilterDTO> filterDTOList, @RequestParam(defaultValue = "1") int page, @RequestParam(defaultValue = "10") int size){
         return ResponseEntity.ok(userService.getFilteredUsers(filterDTOList, page, size));
+    }
+
+    @GetMapping("/count")
+    public ResponseEntity<GetCountOfUsers> getCountofUsers(){
+        return ResponseEntity.ok(userService.getCountofUsersRegistered());
     }
 
     @GetMapping("{id}")

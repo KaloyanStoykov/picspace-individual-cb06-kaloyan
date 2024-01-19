@@ -30,6 +30,12 @@ public class EntryController {
         return ResponseEntity.ok(entryService.getAllEntries());
     }
 
+    @GetMapping("/count")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<GetCountOfEntriesResponse> countEntries(){
+        return ResponseEntity.ok(entryService.countEntries());
+    }
+
     @GetMapping("/user/{id}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<GetEntriesByUserIdResponse> getUserEntries(@PathVariable Long id){

@@ -33,7 +33,6 @@ public class EntryConverterTest {
 
     @BeforeEach
     public void setUp() {
-        // Initialize mocks and inject them
         MockitoAnnotations.initMocks(this);
     }
 
@@ -45,7 +44,6 @@ public class EntryConverterTest {
 
         List<EntryEntity> entries = Collections.emptyList();
 
-        // Arrange
         LocalDateTime registrationTime = LocalDateTime.now();
         UserEntity userEntity1 = new UserEntity(1L, "John", "Doe", "johndoe", "pass1", 30, registrationTime, roles, entries);
         User user1 = new User(1L, "John", "Doe", "johndoe", "pass1", 30, registrationTime);
@@ -55,16 +53,13 @@ public class EntryConverterTest {
 
         when(userConverter.toEntity(user1)).thenReturn(userEntity1);
 
-        // Act
         EntryEntity result = entryConverter.toEntity(entry);
 
-        // Assert
         assertNotNull(result);
         assertEquals(userEntity1, result.getEntryUser());
         assertEquals(entry.getContent(), result.getContent());
         assertEquals(date, result.getDateCreated());
 
-        // Verify interactions
         verify(userConverter, times(1)).toEntity(user1);
     }
 
@@ -76,7 +71,7 @@ public class EntryConverterTest {
 
         List<EntryEntity> entries = Collections.emptyList();
 
-        // Arrange
+
         LocalDateTime registrationTime = LocalDateTime.now();
         UserEntity userEntity1 = new UserEntity(1L, "John", "Doe", "johndoe", "pass1", 30, registrationTime, roles, entries);
         User user1 = new User(2L, "John", "Doe", "johndoe", "pass1", 30, registrationTime);
@@ -86,17 +81,17 @@ public class EntryConverterTest {
 
         when(userConverter.toPojo(userEntity1)).thenReturn(user1);
 
-        // Act
+
         Entry result = entryConverter.toPojo(entryEntity);
 
-        // Assert
+
         assertNotNull(result);
         assertEquals(entryEntity.getId(), result.getPostId());
         assertEquals(user1, result.getUser());
         assertEquals(entryEntity.getContent(), result.getContent());
         assertEquals(date, result.getDateCreated());
 
-        // Verify interactions
+
         verify(userConverter, times(1)).toPojo(userEntity1);
     }
 
